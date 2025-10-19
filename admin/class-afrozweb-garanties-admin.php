@@ -59,7 +59,7 @@ class Afrozweb_Garanties_Admin {
      *
      * @since    1.0.0
      */
-    public function enqueue_styles() {
+    public function enqueue_styles( $hook ) {
 
         /**
          * This function is provided for demonstration purposes only.
@@ -72,6 +72,13 @@ class Afrozweb_Garanties_Admin {
          * between the defined hooks and the functions defined in this
          * class.
          */
+
+        // اطمینان از اینکه اسکریپت‌ها فقط در صفحه پلاگin ما بارگذاری شوند
+        if ( 'toplevel_page_warranty-management-list' !== $hook && 'warranties_page_warranty-management-add-new' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_style( 'select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css' );
 
     }
 
@@ -80,7 +87,7 @@ class Afrozweb_Garanties_Admin {
      *
      * @since    1.0.0
      */
-    public function enqueue_scripts() {
+    public function enqueue_scripts( $hook ) {
 
         /**
          * This function is provided for demonstration purposes only.
@@ -93,6 +100,22 @@ class Afrozweb_Garanties_Admin {
          * between the defined hooks and the functions defined in this
          * class.
          */
+
+        // اطمینان از اینکه اسکریپت‌ها فقط در صفحه پلاگin ما بارگذاری شوند
+        if ( 'toplevel_page_warranty-management-list' !== $hook && 'warranties_page_warranty-management-add-new' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_script( 'select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js', array( 'jquery' ) );
+
+        wp_add_inline_script('select2', '
+        jQuery(document).ready(function($) {
+            $(".representative-select2").select2({
+                placeholder: "' . esc_js( __( 'یک نماینده را جستجو و انتخاب کنید...', AFROZWEB_GARANTY_SLUG ) ) . '",
+                width: "100%"
+            });
+        });
+    ');
 
     }
 
@@ -104,7 +127,7 @@ class Afrozweb_Garanties_Admin {
             __( 'گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),          // عنوان منو (Menu Title)
             'manage_options',                                   // سطح دسترسی مورد نیاز
             'warranty-management-list',                         // اسلاگ (Slug) منو
-            'warranty_management_list_page',                    // تابع نمایش محتوای صفحه لیست
+            [ $this, 'garanties_list_content' ],                    // تابع نمایش محتوای صفحه لیست
             'dashicons-shield-alt',                             // آیکون منو
             25                                                  // موقعیت منو در پیشخوان
         );
@@ -116,7 +139,7 @@ class Afrozweb_Garanties_Admin {
             __( 'لیست گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),     // عنوان منو
             'manage_options',                                   // سطح دسترسی
             'warranty-management-list',                         // اسلاگ این منو (مشابه والد برای صفحه پیش‌فرض)
-            'warranty_management_list_page'                     // تابع نمایش محتوا
+            [ $this, 'garanties_list_content' ]                     // تابع نمایش محتوا
         );
 
         // زیرمنوی "افزودن گارانتی"
@@ -126,11 +149,120 @@ class Afrozweb_Garanties_Admin {
             __( 'افزودن جدید', AFROZWEB_GARANTY_SLUG ),         // عنوان منو
             'manage_options',                                   // سطح دسترسی
             'warranty-management-add-new',                      // اسلاگ این منو
-            'warranty_management_add_edit_page'                 // تابع نمایش محتوای صفحه افزودن/ویرایش
+            [ $this, 'warranty_management_add_edit_page' ]                 // تابع نمایش محتوای صفحه افزودن/ویرایش
         );
     }
 
-    public function afrozweb_garanties_list_content ()
+    public function warranty_management_handle_form_submission() {
+        // فقط در صفحه افزودن/ویرایش پلاگin ما اجرا شود
+        if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'warranty-management-add-new' ) {
+            return;
+        }
+
+        // بررسی می‌کنیم که فرم با استفاده از nonce امن ما ارسال شده باشد
+        if ( isset( $_POST['submit_warranty_nonce'] ) && wp_verify_nonce( $_POST['submit_warranty_nonce'], 'save_warranty_action' ) ) {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'warranties';
+
+            // 1. آماده‌سازی داده‌ها برای ذخیره در دیتابیس (با فیلد جدید نماینده)
+            $data = [
+                'customer_name'         => sanitize_text_field( $_POST['customer_name'] ),
+                'customer_phone'        => sanitize_text_field( $_POST['customer_phone'] ),
+                'installed_area'        => isset($_POST['installed_area']) ? floatval( $_POST['installed_area'] ) : null,
+                'project_address'       => sanitize_textarea_field( $_POST['project_address'] ),
+                'project_postal_code'   => sanitize_text_field( $_POST['project_postal_code'] ),
+                'installer_name'        => sanitize_text_field( $_POST['installer_name'] ),
+                'installer_phone'       => sanitize_text_field( $_POST['installer_phone'] ),
+                'installer_national_id' => sanitize_text_field( $_POST['installer_national_id'] ),
+                'warranty_number'       => sanitize_text_field( $_POST['warranty_number'] ),
+                'product_type'          => sanitize_text_field( $_POST['product_type'] ),
+                'installation_date'     => sanitize_text_field( $_POST['installation_date'] ),
+                'warranty_period_years' => absint( $_POST['warranty_period_years'] ),
+                'warranty_period_months'=> absint( $_POST['warranty_period_months'] ),
+                'project_description'   => sanitize_textarea_field( $_POST['project_description'] ),
+                'status'                => sanitize_text_field( $_POST['status'] ),
+                'representative_id'     => absint( $_POST['representative_id'] ), // <-- اصلاح کلیدی
+            ];
+
+            // 2. محاسبه تاریخ انقضا
+            if ( ! empty( $data['installation_date'] ) ) {
+                $installation_date_obj = new DateTime( $data['installation_date'] );
+                $installation_date_obj->modify( '+' . $data['warranty_period_years'] . ' years' );
+                $installation_date_obj->modify( '+' . $data['warranty_period_months'] . ' months' );
+                $data['expiration_date'] = $installation_date_obj->format( 'Y-m-d' );
+            }
+
+            // 3. تشخیص حالت افزودن یا ویرایش
+            $warranty_id = isset( $_POST['warranty_id'] ) ? absint( $_POST['warranty_id'] ) : 0;
+            $redirect_url = '';
+
+            if ( $warranty_id > 0 ) {
+                // حالت به‌روزرسانی (Update)
+                $result = $wpdb->update( $table_name, $data, [ 'id' => $warranty_id ] );
+                $message_code = ( $result !== false ) ? '2' : '3'; // 2=موفق, 3=خطا
+                $redirect_url = admin_url( 'admin.php?page=warranty-management-add-new&id=' . $warranty_id . '&message=' . $message_code );
+            } else {
+                // حالت افزودن (Insert)
+                $result = $wpdb->insert( $table_name, $data );
+                if ( $result ) {
+                    $new_id = $wpdb->insert_id;
+                    $redirect_url = admin_url( 'admin.php?page=warranty-management-add-new&id=' . $new_id . '&message=1' ); // 1=ایجاد موفق
+                } else {
+                    $redirect_url = admin_url( 'admin.php?page=warranty-management-add-new&message=4' ); // 4=خطا در ایجاد
+                }
+            }
+
+            // ریدایرکت به همراه پارامترها
+            wp_safe_redirect( $redirect_url );
+            exit;
+        }
+    }
+
+    public function warranty_management_add_edit_page()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'warranties';
+        $message = '';
+        $notice_class = '';
+
+        // واکشی پیام‌ها از URL
+        if ( isset( $_GET['message'] ) ) {
+            switch ( $_GET['message'] ) {
+                case '1':
+                    $message = __( 'گارانتی با موفقیت ایجاد شد. اکنون می‌توانید به ویرایش ادامه دهید.', AFROZWEB_GARANTY_SLUG );
+                    $notice_class = 'notice-success';
+                    break;
+                case '2':
+                    $message = __( 'گارانتی با موفقیت به‌روزرسانی شد.', AFROZWEB_GARANTY_SLUG );
+                    $notice_class = 'notice-success';
+                    break;
+                case '3':
+                    $message = __( 'خطایی هنگام به‌روزرسانی گارانتی رخ داد.', AFROZWEB_GARANTY_SLUG );
+                    $notice_class = 'notice-error';
+                    break;
+                case '4':
+                    $message = __( 'خطایی هنگام ایجاد گارانتی رخ داد.', AFROZWEB_GARANTY_SLUG );
+                    $notice_class = 'notice-error';
+                    break;
+            }
+        }
+
+        $warranty = null;
+        $warranty_id_from_url = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+        if ( $warranty_id_from_url > 0 ) {
+            $warranty = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $warranty_id_from_url ) );
+        }
+
+        // دریافت لیست کاربران با نقش "representative" برای ارسال به فرم
+        $representatives = get_users( [ 'role' => 'representative', 'fields' => [ 'ID', 'display_name' ] ] );
+
+        // رندر کردن HTML فرم
+
+        // --- بخش سوم: رندر کردن HTML فرم ---
+        require_once AFROZWEB_GARANTY_BASE . 'templates/admin/warranty-add-edit-form.php';
+    }
+
+    public function garanties_list_content ()
     {
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-books-list-table.php';
         //Create an instance of our package class...
