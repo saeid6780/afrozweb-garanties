@@ -58,8 +58,15 @@ function deactivate_afrozweb_garanties() {
 	Afrozweb_Garanties_Deactivator::deactivate();
 }
 
+function warranty_management_drop_table() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'warranties';
+    $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+}
+
 register_activation_hook( __FILE__, 'activate_afrozweb_garanties' );
 register_deactivation_hook( __FILE__, 'deactivate_afrozweb_garanties' );
+register_uninstall_hook( __FILE__, 'warranty_management_drop_table' );
 
 /**
  * The core plugin class that is used to define internationalization,
