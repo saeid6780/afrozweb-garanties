@@ -98,39 +98,36 @@ class Afrozweb_Garanties_Admin {
 
     public function settings_menu ()
     {
-        // Add Menu
-        {
-            // منوی اصلی
-            add_menu_page(
-                'Warranties',                         // عنوان صفحه (Page Title)
-                'Warranties',                         // عنوان منو (Menu Title)
-                'manage_options',                     // سطح دسترسی مورد نیاز
-                'warranty-management-list',           // اسلاگ (Slug) منو
-                'warranty_management_list_page',      // تابع نمایش محتوای صفحه لیست
-                'dashicons-shield-alt',               // آیکون منو
-                25                                    // موقعیت منو در پیشخوان
-            );
+        // منوی اصلی
+        add_menu_page(
+            __( 'Warranties', AFROZWEB_GARANTY_SLUG ),          // عنوان صفحه (Page Title)
+            __( 'گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),          // عنوان منو (Menu Title)
+            'manage_options',                                   // سطح دسترسی مورد نیاز
+            'warranty-management-list',                         // اسلاگ (Slug) منو
+            'warranty_management_list_page',                    // تابع نمایش محتوای صفحه لیست
+            'dashicons-shield-alt',                             // آیکون منو
+            25                                                  // موقعیت منو در پیشخوان
+        );
 
-            // زیرمنوی "لیست گارانتی‌ها"
-            add_submenu_page(
-                'warranty-management-list',           // اسلاگ منوی والد
-                'All Warranties',                     // عنوان صفحه
-                'All Warranties',                     // عنوان منو
-                'manage_options',                     // سطح دسترسی
-                'warranty-management-list',           // اسلاگ این منو (مشابه والد برای صفحه پیش‌فرض)
-                'warranty_management_list_page'       // تابع نمایش محتوا
-            );
+        // زیرمنوی "لیست گارانتی‌ها"
+        add_submenu_page(
+            'warranty-management-list',                         // اسلاگ منوی والد
+            __( 'لیست گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),     // عنوان صفحه
+            __( 'لیست گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),     // عنوان منو
+            'manage_options',                                   // سطح دسترسی
+            'warranty-management-list',                         // اسلاگ این منو (مشابه والد برای صفحه پیش‌فرض)
+            'warranty_management_list_page'                     // تابع نمایش محتوا
+        );
 
-            // زیرمنوی "افزودن گارانتی"
-            add_submenu_page(
-                'warranty-management-list',           // اسلاگ منوی والد
-                'Add New Warranty',                   // عنوان صفحه
-                'Add New',                            // عنوان منو
-                'manage_options',                     // سطح دسترسی
-                'warranty-management-add-new',        // اسلاگ این منو
-                'warranty_management_add_edit_page'   // تابع نمایش محتوای صفحه افزودن/ویرایش
-            );
-        }
+        // زیرمنوی "افزودن گارانتی"
+        add_submenu_page(
+            'warranty-management-list',                         // اسلاگ منوی والد
+            __( 'افزودن گارانتی جدید', AFROZWEB_GARANTY_SLUG ), // عنوان صفحه
+            __( 'افزودن جدید', AFROZWEB_GARANTY_SLUG ),         // عنوان منو
+            'manage_options',                                   // سطح دسترسی
+            'warranty-management-add-new',                      // اسلاگ این منو
+            'warranty_management_add_edit_page'                 // تابع نمایش محتوای صفحه افزودن/ویرایش
+        );
     }
 
     public function afrozweb_garanties_list_content ()
