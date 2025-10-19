@@ -45,16 +45,16 @@ define( 'AFROZWEB_GARANTY_TEMPLATE', AFROZWEB_GARANTY_BASE . 'templates/' );
  * This action is documented in includes/class-afrozweb_garanties-activator.php
  */
 function activate_afrozweb_garanties() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb_garanties-activator.php';
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb-garanties-activator.php';
 	Afrozweb_Garanties_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-afrozweb_garanties-deactivator.php
+ * This action is documented in includes/class-afrozweb-garanties-deactivator.php
  */
 function deactivate_afrozweb_garanties() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb_garanties-deactivator.php';
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb-garanties-deactivator.php';
 	Afrozweb_Garanties_Deactivator::deactivate();
 }
 
@@ -72,7 +72,7 @@ register_uninstall_hook( __FILE__, 'warranty_management_drop_table' );
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb_garanties.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-afrozweb-garanties.php';
 
 /**
  * Begins execution of the plugin.

@@ -103,29 +103,29 @@ class Afrozweb_Garanties {
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb_garanties-loader.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb-garanties-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb_garanties-i18n.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb-garanties-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-afrozweb_garanties-admin.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-afrozweb-garanties-admin.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-afrozweb_garanties-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-afrozweb-garanties-public.php';
 
 		/**
 		 * The class responsible for defining all shortcodes
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb_garanties-shortcodes.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-afrozweb-garanties-shortcodes.php';
 
 		$this->loader = new Afrozweb_Garanties_Loader();
 
