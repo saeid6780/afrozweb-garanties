@@ -25,7 +25,7 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
         <?php wp_nonce_field( 'save_warranty_action', 'submit_warranty_nonce' ); ?>
         <?php if ( $warranty ) : ?>
             <input type="hidden" name="warranty_id" value="<?php echo esc_attr( $warranty->id ); ?>" />
-        <?php endif; var_dump($representatives);?>
+        <?php endif;?>
 
         <table class="form-table" role="presentation">
             <tbody>

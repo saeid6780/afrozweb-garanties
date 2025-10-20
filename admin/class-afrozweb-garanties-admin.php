@@ -74,11 +74,11 @@ class Afrozweb_Garanties_Admin {
          */
 
         // اطمینان از اینکه اسکریپت‌ها فقط در صفحه پلاگin ما بارگذاری شوند
-        if ( 'toplevel_page_warranty-management-list' !== $hook && 'warranties_page_warranty-management-add-new' !== $hook ) {
+        if ( ! str_contains( $hook, 'warranty-management-add-new' ) ) {
             return;
         }
 
-        wp_enqueue_style( 'select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css' );
+        wp_enqueue_style( 'awg-select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css' );
 
     }
 
@@ -88,7 +88,6 @@ class Afrozweb_Garanties_Admin {
      * @since    1.0.0
      */
     public function enqueue_scripts( $hook ) {
-
         /**
          * This function is provided for demonstration purposes only.
          *
@@ -102,13 +101,13 @@ class Afrozweb_Garanties_Admin {
          */
 
         // اطمینان از اینکه اسکریپت‌ها فقط در صفحه پلاگin ما بارگذاری شوند
-        if ( 'toplevel_page_warranty-management-list' !== $hook && 'warranties_page_warranty-management-add-new' !== $hook ) {
+        if ( ! str_contains( $hook, 'warranty-management-add-new' ) ) {
             return;
         }
 
-        wp_enqueue_script( 'select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js', array( 'jquery' ) );
+        wp_enqueue_script( 'awg-select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js', array( 'jquery' ) );
 
-        wp_add_inline_script('select2', '
+        wp_add_inline_script('awg-select2', '
         jQuery(document).ready(function($) {
             $(".representative-select2").select2({
                 placeholder: "' . esc_js( __( 'یک نماینده را جستجو و انتخاب کنید...', AFROZWEB_GARANTY_SLUG ) ) . '",
@@ -264,20 +263,41 @@ class Afrozweb_Garanties_Admin {
 
     public function garanties_list_content ()
     {
-        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-books-list-table.php';
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-garanties-list-table.php';
         //Create an instance of our package class...
         $list_table = new Afrozweb_Garanty_List_Table();
         //Fetch, prepare, sort, and filter our data...
         $list_table->prepare_items();
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php _e( 'Books', AFROZWEB_GARANTY_SLUG ) ?></h1>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'لیست گارانتی‌ها', AFROZWEB_GARANTY_SLUG ); ?></h1>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=warranty-management-add-new' ) ); ?>" class="page-title-action">
+                <?php esc_html_e( 'افزودن جدید', AFROZWEB_GARANTY_SLUG ); ?>
+            </a>
             <hr class="wp-header-end">
+            <?php
+            // نمایش پیام‌های بازگشتی از عملیات حذف
+            if ( isset( $_GET['deleted'] ) && $_GET['deleted'] > 0 ) {
+                $count = intval($_GET['deleted']);
+                $message = sprintf(
+                    _n(
+                        '%d warranty has been successfully deleted.',
+                        '%d warranties have been successfully deleted.',
+                        $count,
+                        AFROZWEB_GARANTY_SLUG
+                    ),
+                    $count
+                );
+                echo '<div class="notice notice-success is-dismissible"><p>' . $message . '</p></div>';
+            }
+            ?>
             <?php $list_table->views(); ?>
             <form id="appointments-form" method="get">
                 <input type="hidden" name="page" value="<?php echo $_REQUEST[ 'page' ] ?>"/>
-                <?php $list_table->search_box( __( 'Search Books', AFROZWEB_GARANTY_SLUG ), 'search' ); ?>
-                <?php $list_table->display(); ?>
+                <?php
+                $list_table->search_box( __( 'جستجوی گارانتی', AFROZWEB_GARANTY_SLUG ), 'warranty_search' );
+                $list_table->display();
+                ?>
             </form>
         </div>
         <?php
