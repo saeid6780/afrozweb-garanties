@@ -13,6 +13,10 @@
     box-sizing: border-box;
 }
 
+.warranty-form-wrapper hr{
+    margin-bottom: 16px !important;
+}
+
 /* --- Form Groups and Rows --- */
 .form-group {
     margin-bottom: 20px;
@@ -105,7 +109,7 @@ small.error-message {
 #submit-warranty-btn {
     display: inline-block;
     padding: 12px 25px;
-    background-color: #0073aa;
+    background-color: #001834;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -129,5 +133,8 @@ small.error-message {
     .form-row {
         flex-direction: column;
         gap: 0;
+    }
+    .form-row .form-group {
+        flex: 1 1 110px; /* Responsive behavior */
     }
 }

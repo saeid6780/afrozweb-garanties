@@ -17,11 +17,15 @@
     width: 100%;
     border-collapse: collapse;
     text-align: right; /* For RTL */
+    border-radius: 8px;
+    border: none;
+    margin: 0;
 }
 
 .warranty-list-table th,
 .warranty-list-table td {
     padding: 12px 15px;
+    border: none;
     border-bottom: 1px solid #eee;
 }
 
