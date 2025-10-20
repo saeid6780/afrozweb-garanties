@@ -39,7 +39,7 @@ class Afrozweb_Garanties_Shortcodes {
 
     protected $wpdb;
 
-    private $book_table;
+    private $table;
 
     /**
      * Initialize the collections used to maintain the actions and filters.
@@ -50,7 +50,7 @@ class Afrozweb_Garanties_Shortcodes {
     public function __construct( $plugin_name, $version ) {
         global $wpdb;
         $this->wpdb = $wpdb;
-        $this->book_table = $wpdb->prefix . 'books';
+        $this->table = $wpdb->prefix . 'books';
         $this->plugin_name = $plugin_name;
         $this->version = $version;
 
@@ -62,86 +62,124 @@ class Afrozweb_Garanties_Shortcodes {
      *  - primary_color (optional)
      *  - secondary_color (optional)
      */
-    public function render_book_list_shortcode( $atts ) {
+    public function warranty_submission_shortcode_handler( $atts ) {
 
-        // defaults
-        $atts = shortcode_atts( array(
-            'primary_color'   => '#0d6efd', // default bootstrap blue
-            'secondary_color' => '#f8f9fa', // light grey
-        ), $atts, 'book_list' );
-        // enqueue assets
-        $public_class = new Afrozweb_Garanties_Public( $this->plugin_name, $this->version );
-        $public_class->enqueue_styles( );
-        $public_class->enqueue_scripts( $atts );
+        // 1. فقط برای کاربران لاگین شده
+        if ( ! is_user_logged_in() ) {
+            return '<p class="warranty-form-error">' . esc_html__( 'برای دسترسی به این فرم باید وارد حساب کاربری خود شوید.', AFROZWEB_GARANTY_SLUG ) . '</p>';
+        }
 
-        // fetch books
-        $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT id, title, author, published_year FROM {$this->book_table} ORDER BY id DESC LIMIT %d", 1000 ) ); // limit for safety
+        $user = wp_get_current_user();
+        // 2. فقط برای کاربران با نقش 'representative'
+        if ( ! in_array( 'representative', (array) $user->roles ) && ! in_array( 'administrator', (array) $user->roles ) ) {
+            return '<p class="warranty-form-error">' . esc_html__( 'شما دسترسی لازم برای مشاهده این فرم را ندارید.', AFROZWEB_GARANTY_SLUG ) . '</p>';
+        }
 
+        // 3. بررسی تایید شدن حساب نمایندگی (نیازمندی شماره ۱)
+        $corresponded_post_id = get_user_meta( $user->ID, 'corresponded_post_id', true );
+        if ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) {
+            return '<div class="warranty-form-notice notice-warning"><p>' . esc_html__( 'حساب نمایندگی شما هنوز توسط مدیر تایید نشده است. پس از تایید، می‌توانید گارانتی‌های خود را ثبت کنید.', AFROZWEB_GARANTY_SLUG ) . '</p></div>';
+        }
+
+        // 4. اگر تمام شرایط برقرار بود، اسکریپت‌ها و استایل‌ها را فراخوانی کن (نیازمندی شماره ۶)
+        wp_enqueue_style( 'warranty-frontend-form-style' );
+        wp_enqueue_script( 'warranty-frontend-form-script' );
+
+        // 5. رندر کردن فرم از یک فایل view مجزا
         ob_start();
-
-        include $this->get_template_part( 'afrozweb-garanties-list-shortcode-display' );
-        ?>
-        
-        <?php
-
+        include $this->get_template_part( 'warranty-submission-form-view' );
         return ob_get_clean();
     }
 
-    public function ajax_add_book() {
-        // Accept both logged-in and guest via wp_ajax_nopriv
-        check_ajax_referer( 'nordic_add_book_action', 'nonce' );
+    public function handle_warranty_submission_ajax()
+    {
+        // 1. بررسی امنیت (Nonce)
+        check_ajax_referer( 'warranty_form_nonce', 'nonce' );
 
-        // get POST data
-        $title = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-        $author = isset( $_POST['author'] ) ? sanitize_text_field( wp_unslash( $_POST['author'] ) ) : '';
-        $year = isset( $_POST['published_year'] ) ? intval( $_POST['published_year'] ) : 0;
+        $errors = [];
 
-        // basic validation
-        $errors = array();
-        if ( '' === $title ) {
-            $errors[] = __( 'Title is required.', AFROZWEB_GARANTY_SLUG );
-        }
-        if ( '' === $author ) {
-            $errors[] = __( 'Author is required.', AFROZWEB_GARANTY_SLUG );
-        }
-        if ( $year <= 0 ) {
-            $errors[] = __( 'Published year must be a positive number.', AFROZWEB_GARANTY_SLUG );
+        // 2. اعتبارسنجی سمت سرور (نیازمندی شماره ۲)
+        $required_fields = ['customer_name', 'customer_phone', 'project_address', 'installer_phone', 'warranty_number', 'product_type', 'installation_date'];
+        foreach ($required_fields as $field) {
+            if ( empty( $_POST[$field] ) ) {
+                $errors[$field] = __( 'این فیلد ضروری است.', AFROZWEB_GARANTY_SLUG );
+            }
         }
 
+        // اعتبارسنجی شماره تماس مشتری
+        if ( ! empty( $_POST['customer_phone'] ) && ! preg_match( '/^09\d{9}$/', $_POST['customer_phone'] ) ) {
+            $errors['customer_phone'] = __( 'فرمت شماره تماس مشتری صحیح نیست (مثال: 09123456789).', AFROZWEB_GARANTY_SLUG );
+        }
+
+        // اعتبارسنجی شماره تماس نصاب
+        if ( ! empty( $_POST['installer_phone'] ) && ! preg_match( '/^09\d{9}$/', $_POST['installer_phone'] ) ) {
+            $errors['installer_phone'] = __( 'فرمت شماره تماس نصاب صحیح نیست.', AFROZWEB_GARANTY_SLUG );
+        }
+
+        // اعتبارسنجی کد پستی
+        if ( ! empty( $_POST['project_postal_code'] ) && ! preg_match( '/^\d{10}$/', $_POST['project_postal_code'] ) ) {
+            $errors['project_postal_code'] = __( 'کد پستی باید ۱۰ رقمی باشد.', AFROZWEB_GARANTY_SLUG );
+        }
+
+        // اعتبارسنجی تاریخ نصب (نباید در آینده باشد)
+        if ( ! empty( $_POST['installation_date'] ) ) {
+            $installation_date = new DateTime( $_POST['installation_date'] );
+            $today = new DateTime();
+            if ( $installation_date > $today ) {
+                $errors['installation_date'] = __( 'تاریخ نصب نمی‌تواند در آینده باشد.', AFROZWEB_GARANTY_SLUG );
+            }
+        }
+
+        // اعتبارسنجی یکتا بودن شماره گارانتی
+        if ( ! empty( $_POST['warranty_number'] ) ) {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'warranties';
+            $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table_name WHERE warranty_number = %s", sanitize_text_field( $_POST['warranty_number'] ) ) );
+            if ( $exists ) {
+                $errors['warranty_number'] = __( 'این شماره گارانتی قبلاً ثبت شده است.', AFROZWEB_GARANTY_SLUG );
+            }
+        }
+
+        // 3. اگر خطایی وجود داشت، آن را برگردان
         if ( ! empty( $errors ) ) {
-            wp_send_json_error( array( 'message' => implode( ' ', $errors ) ) );
+            wp_send_json_error( [ 'errors' => $errors ] );
         }
 
-        global $wpdb;
+        // 4. اگر همه چیز صحیح بود، داده‌ها را در دیتابیس ذخیره کن
+        $data = [
+            'customer_name'         => sanitize_text_field( $_POST['customer_name'] ),
+            'customer_phone'        => sanitize_text_field( $_POST['customer_phone'] ),
+            'installed_area'        => isset($_POST['installed_area']) ? floatval( $_POST['installed_area'] ) : null,
+            'project_address'       => sanitize_textarea_field( $_POST['project_address'] ),
+            'project_postal_code'   => sanitize_text_field( $_POST['project_postal_code'] ),
+            'installer_name'        => sanitize_text_field( $_POST['installer_name'] ),
+            'installer_phone'       => sanitize_text_field( $_POST['installer_phone'] ),
+            'installer_national_id' => sanitize_text_field( $_POST['installer_national_id'] ),
+            'warranty_number'       => sanitize_text_field( $_POST['warranty_number'] ),
+            'product_type'          => sanitize_text_field( $_POST['product_type'] ),
+            'installation_date'     => sanitize_text_field( $_POST['installation_date'] ),
+            'warranty_period_years' => isset($_POST['warranty_period_years']) ? absint( $_POST['warranty_period_years'] ) : 10, // مقدار پیش‌فرض
+            'warranty_period_months'=> isset($_POST['warranty_period_months']) ? absint( $_POST['warranty_period_months'] ) : 0,
+            'project_description'   => sanitize_textarea_field( $_POST['project_description'] ),
+            'status'                => 'pending_approval', // نیازمندی شماره ۴
+            'representative_id'     => get_current_user_id(),
+        ];
 
-        $data = array(
-            'title'          => $title,
-            'author'         => $author,
-            'published_year' => $year,
-        );
+        // محاسبه تاریخ انقضا
+        $install_date = new DateTime( $data['installation_date'] );
+        $install_date->modify( '+' . $data['warranty_period_years'] . ' years' );
+        $install_date->modify( '+' . $data['warranty_period_months'] . ' months' );
+        $data['expiration_date'] = $install_date->format( 'Y-m-d' );
 
-        $format = array( '%s', '%s', '%d' );
+        $result = $wpdb->insert( $table_name, $data );
 
-        $inserted = $wpdb->insert( $this->book_table, $data, $format );
-
-        if ( false === $inserted ) {
-            wp_send_json_error( array( 'message' => __( 'Database error while inserting book.', AFROZWEB_GARANTY_SLUG ) ) );
+        if ( $result ) {
+            wp_send_json_success( [ 'message' => __( 'گارانتی شما با موفقیت ثبت شد و پس از بررسی توسط مدیر، تایید خواهد شد.', AFROZWEB_GARANTY_SLUG ) ] );
+        } else {
+            wp_send_json_error( [ 'message' => __( 'خطایی در پایگاه داده رخ داد. لطفاً دوباره تلاش کنید.', AFROZWEB_GARANTY_SLUG ) ] );
         }
 
-        $insert_id = intval( $wpdb->insert_id );
-
-        // build HTML row to return (escaped)
-        $row_html  = '<tr data-book-id="' . esc_attr( $insert_id ) . '">';
-        $row_html .= '<td>' . esc_html( $data['title'] ) . '</td>';
-        $row_html .= '<td>' . esc_html( $data['author'] ) . '</td>';
-        $row_html .= '<td>' . esc_html( $data['published_year'] ) . '</td>';
-        $row_html .= '</tr>';
-
-        wp_send_json_success( array(
-            'message' => __( 'Book added successfully.', AFROZWEB_GARANTY_SLUG ),
-            'row'     => $row_html,
-            'id'      => $insert_id,
-        ) );
+        wp_die();
     }
 
     public function get_template_part ( $template )

@@ -176,10 +176,12 @@ class Afrozweb_Garanties {
 
         $shortcodes = new Afrozweb_Garanties_Shortcodes( $this->get_plugin_name(), $this->get_version() );
 
-        $this->loader->add_shortcode( 'book_list', $shortcodes, 'render_book_list_shortcode' );
+        $this->loader->add_shortcode( 'warranty_submission_form', $shortcodes, 'warranty_submission_shortcode_handler' );
+        $this->loader->add_action( 'wp_ajax_submit_warranty_form', $shortcodes, 'handle_warranty_submission_ajax' );
 
-        $this->loader->add_action( 'wp_ajax_nordic_add_book', $shortcodes, 'ajax_add_book' , 20 );
-        $this->loader->add_action( 'wp_ajax_nopriv_nordic_add_book', $shortcodes, 'ajax_add_book' , 20 );
+        $public = new Afrozweb_Garanties_Public( $this->get_plugin_name(), $this->get_version()  );
+        $this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
+        $this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_scripts' );
 	}
 
 	/**

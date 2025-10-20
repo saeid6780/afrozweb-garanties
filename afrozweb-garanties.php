@@ -38,6 +38,7 @@ if ( ! defined( 'WPINC' ) ) {
 define( 'AFROZWEB_GARANTIES_VERSION', '1.0.0' );
 define( 'AFROZWEB_GARANTY_SLUG', 'afrozweb-garanties' );
 define( 'AFROZWEB_GARANTY_BASE', plugin_dir_path( __FILE__ ) );
+define( 'AFROZWEB_GARANTY_URL', plugin_dir_url( __FILE__ )  );
 define( 'AFROZWEB_GARANTY_TEMPLATE', AFROZWEB_GARANTY_BASE . 'templates/' );
 
 /**

@@ -73,8 +73,12 @@ class Afrozweb_Garanties_Public {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->plugin_name . '-style', plugin_dir_url( __FILE__ ) . 'css/afrozweb_garanties-public.css', array(), $this->version, 'all' );
-
+        wp_register_style(
+            'warranty-frontend-form-style',
+            AFROZWEB_GARANTY_URL . 'public/css/warranty-form.css',
+            [],
+            '1.0.0'
+        );
     }
 
 	/**
@@ -95,23 +99,20 @@ class Afrozweb_Garanties_Public {
 		 * class.
 		 */
 
-		wp_register_script( $this->plugin_name . '-script', plugin_dir_url( __FILE__ ) . 'js/afrozweb_garanties-public.js', array( 'jquery' ), $this->version, true );
-
-        $localize = array(
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'nordic_add_book_action' ),
-            'strings'  => array(
-                'saving'        => __( 'Saving...', AFROZWEB_GARANTY_SLUG ),
-                'saved'         => __( 'Book added successfully.', AFROZWEB_GARANTY_SLUG ),
-                'error'         => __( 'An error occurred. Please try again.', AFROZWEB_GARANTY_SLUG ),
-                'validation'    => __( 'Please fill all required fields correctly.', AFROZWEB_GARANTY_SLUG ),
-            ),
-            'primary_color'   => $atts['primary_color'],
-            'secondary_color' => $atts['secondary_color'],
+        wp_register_script(
+            'warranty-frontend-form-script',
+            AFROZWEB_GARANTY_URL . 'public/js/warranty-form.js',
+            [ 'jquery' ],
+            '1.0.0',
+            true // در فوتر لود شود
         );
 
-        wp_localize_script( 'afrozweb-garanties-script', 'AfrozwebGarantiesBooks', $localize );
-        wp_enqueue_script( $this->plugin_name . '-script' );
+        // ارسال داده‌های لازم از PHP به JavaScript
+        wp_localize_script( 'warranty-frontend-form-script', 'warranty_form_ajax', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'warranty_form_nonce' ),
+            'loading_text' => __( 'در حال ارسال...', AFROZWEB_GARANTY_SLUG ),
+        ]);
 
 	}
 
