@@ -1,0 +1,132 @@
+/* --- Main Container --- */
+.warranty-list-container {
+    font-family: sans-serif;
+    margin: 20px auto;
+}
+
+/* --- Table Wrapper for Responsive Scrolling --- */
+.table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+/* --- Table Styling --- */
+.warranty-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right; /* For RTL */
+}
+
+.warranty-list-table th,
+.warranty-list-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.warranty-list-table th {
+    background-color: #f7f7f7;
+    font-weight: 600;
+    color: #333;
+}
+
+.warranty-list-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #777;
+}
+
+/* --- Status Badges --- */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.status-badge.status-approved { background-color: #28a745; }
+.status-badge.status-pending_approval { background-color: #ffc107; color: #333; }
+.status-badge.status-expired { background-color: #6c757d; }
+
+
+/* --- Pagination --- */
+.pagination-wrapper {
+    margin-top: 20px;
+    text-align: center;
+}
+.pagination-wrapper .page-numbers {
+    display: inline-block;
+    padding: 8px 14px;
+    margin: 0 2px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    color: #0073aa;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+.pagination-wrapper .page-numbers:hover {
+    background-color: #f5f5f5;
+}
+.pagination-wrapper .page-numbers.current {
+    background-color: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+    cursor: default;
+}
+
+/* --- Loading Spinner --- */
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0073aa;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Responsive Table --- */
+@media (max-width: 768px) {
+    .warranty-list-table thead {
+        display: none; /* Hide table header */
+    }
+    .warranty-list-table tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .warranty-list-table td {
+        display: block;
+        text-align: right; /* For RTL */
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .warranty-list-table td:last-child {
+        border-bottom: none;
+    }
+    .warranty-list-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px; /* For RTL, this should be right */
+        right: auto; /* For RTL, this should be 10px */
+        width: 45%;
+        padding-right: 10px; /* For RTL, this should be padding-left */
+        white-space: nowrap;
+        font-weight: bold;
+        text-align: left; /* For RTL, this should be right */
+    }
+}

@@ -79,6 +79,11 @@ class Afrozweb_Garanties_Public {
             [],
             '1.0.0'
         );
+        wp_register_style(
+            'warranty-frontend-list-style',
+            AFROZWEB_GARANTY_URL . 'public/css/warranty-list.css',
+            [], '1.0.0'
+        );
     }
 
 	/**
@@ -107,13 +112,23 @@ class Afrozweb_Garanties_Public {
             true // در فوتر لود شود
         );
 
-        // ارسال داده‌های لازم از PHP به JavaScript
         wp_localize_script( 'warranty-frontend-form-script', 'warranty_form_ajax', [
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'warranty_form_nonce' ),
             'loading_text' => __( 'در حال ارسال...', AFROZWEB_GARANTY_SLUG ),
         ]);
 
+        wp_register_script(
+            'warranty-frontend-list-script',
+            AFROZWEB_GARANTY_URL . 'public/js/warranty-list.js',
+            [ 'jquery' ], '1.0.0', true
+        );
+
+        wp_localize_script( 'warranty-frontend-list-script', 'warranty_list_ajax', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'warranty_list_nonce' ),
+            'loading_html' => '<div class="loading-spinner"></div>',
+        ]);
 	}
 
 }

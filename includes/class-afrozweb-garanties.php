@@ -177,7 +177,9 @@ class Afrozweb_Garanties {
         $shortcodes = new Afrozweb_Garanties_Shortcodes( $this->get_plugin_name(), $this->get_version() );
 
         $this->loader->add_shortcode( 'warranty_submission_form', $shortcodes, 'warranty_submission_shortcode_handler' );
+        $this->loader->add_shortcode( 'warranty_list', $shortcodes, 'warranty_list_shortcode_handler' );
         $this->loader->add_action( 'wp_ajax_submit_warranty_form', $shortcodes, 'handle_warranty_submission_ajax' );
+        $this->loader->add_action( 'wp_ajax_get_warranty_list', $shortcodes, 'handle_warranty_list_ajax' );
 
         $public = new Afrozweb_Garanties_Public( $this->get_plugin_name(), $this->get_version()  );
         $this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );

@@ -182,6 +182,125 @@ class Afrozweb_Garanties_Shortcodes {
         wp_die();
     }
 
+    public function warranty_list_shortcode_handler()
+    {
+        if ( ! is_user_logged_in() ) {
+            return '<p class="warranty-list-error">' . esc_html__( 'برای مشاهده لیست گارانتی‌ها باید وارد حساب کاربری خود شوید.', AFROZWEB_GARANTY_SLUG ) . '</p>';
+        }
+
+        $user = wp_get_current_user();
+        $is_admin = in_array( 'administrator', (array) $user->roles );
+        $is_representative = in_array( 'representative', (array) $user->roles );
+
+        // 2. فقط برای ادمین یا نماینده
+        if ( ! $is_admin && ! $is_representative ) {
+            return '<p class="warranty-list-error">' . esc_html__( 'شما دسترسی لازم برای مشاهده این لیست را ندارید.', AFROZWEB_GARANTY_SLUG ) . '</p>';
+        }
+
+        // 3. بررسی تایید شدن حساب نمایندگی (برای نقش نماینده)
+        if ( $is_representative ) {
+            $corresponded_post_id = get_user_meta( $user->ID, 'corresponded_post_id', true );
+            if ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) {
+                return '<div class="warranty-form-notice notice-warning"><p>' . esc_html__( 'حساب نمایندگی شما هنوز توسط مدیر تایید نشده است.', AFROZWEB_GARANTY_SLUG ) . '</p></div>';
+            }
+        }
+
+        // 4. فراخوانی استایل‌ها و اسکریپت‌ها (نیازمندی شماره ۳)
+        wp_enqueue_style( 'warranty-frontend-list-style' );
+        wp_enqueue_script( 'warranty-frontend-list-script' );
+
+        // 5. رندر کردن view اولیه
+        ob_start();
+        include $this->get_template_part( 'warranty-list-view' );
+        return ob_get_clean();
+    }
+
+    public function handle_warranty_list_ajax()
+    {
+        check_ajax_referer( 'warranty_list_nonce', 'nonce' );
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'warranties';
+        $user = wp_get_current_user();
+
+        $per_page = 10;
+        $page = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
+        $offset = ( $page - 1 ) * $per_page;
+
+        $where_clauses = [];
+        $query_params = [];
+
+        // اگر کاربر ادمین نیست، فقط گارانتی‌های خودش را ببیند
+        if ( ! in_array( 'administrator', (array) $user->roles ) ) {
+            $where_clauses[] = "representative_id = %d";
+            $query_params[] = $user->ID;
+        }
+
+        $where_sql = ! empty( $where_clauses ) ? 'WHERE ' . implode( ' AND ', $where_clauses ) : '';
+
+        // کوئری برای شمارش کل آیتم‌ها
+        $total_items_query = "SELECT COUNT(id) FROM {$table_name} {$where_sql}";
+        $total_items = $wpdb->get_var( $wpdb->prepare( $total_items_query, $query_params ) );
+
+        // کوئری برای واکشی داده‌های صفحه فعلی
+        $data_query = "SELECT * FROM {$table_name} {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+        $query_params_with_pagination = array_merge( $query_params, [$per_page, $offset] );
+        $warranties = $wpdb->get_results( $wpdb->prepare( $data_query, $query_params_with_pagination ) );
+
+        // ساخت HTML خروجی
+        ob_start();
+        if ( $warranties ) {
+            $start_row_num = $offset + 1;
+            foreach ( $warranties as $index => $warranty ) {
+                ?>
+                <tr data-id="<?php echo esc_attr( $warranty->id ); ?>">
+                    <td data-label="<?php esc_attr_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $start_row_num + $index ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->warranty_number ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'نام نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installer_name ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'نام مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->customer_name ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تماس مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->customer_phone ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installation_date ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تاریخ انقضا', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->expiration_date ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?>">
+                    <span class="status-badge status-<?php echo esc_attr( $warranty->status ); ?>">
+                        <?php echo esc_html( $this->get_warranty_status_label( $warranty->status ) ); ?>
+                    </span>
+                    </td>
+                </tr>
+                <?php
+            }
+        } else {
+            ?>
+            <tr>
+                <td colspan="8" class="no-results"><?php esc_html_e( 'هیچ گارانتی برای نمایش یافت نشد.', AFROZWEB_GARANTY_SLUG ); ?></td>
+            </tr>
+            <?php
+        }
+        $table_rows_html = ob_get_clean();
+
+        // ساخت HTML صفحه‌بندی
+        $total_pages = ceil( $total_items / $per_page );
+        $pagination_html = '';
+        if ( $total_pages > 1 ) {
+            $pagination_html = paginate_links( [
+                'base'      => '#', // Prevent page reload
+                'format'    => '?paged=%#%',
+                'current'   => $page,
+                'total'     => $total_pages,
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+                'type'      => 'plain'
+            ] );
+        }
+
+        wp_send_json_success( [
+            'table_rows' => $table_rows_html,
+            'pagination' => $pagination_html,
+        ] );
+
+        wp_die();
+    }
+
     public function get_template_part ( $template )
     {
         $located       = '';
@@ -199,6 +318,15 @@ class Afrozweb_Garanties_Shortcodes {
         }
 
         return $located;
+    }
+
+    function get_warranty_status_label( $status_key ) {
+        $statuses = [
+            'approved'         => __( 'تایید شده', AFROZWEB_GARANTY_SLUG ),
+            'pending_approval' => __( 'در انتظار تایید', AFROZWEB_GARANTY_SLUG ),
+            'expired'          => __( 'منقضی شده', AFROZWEB_GARANTY_SLUG ),
+        ];
+        return $statuses[ $status_key ] ?? ucfirst( str_replace( '_', ' ', $status_key ) );
     }
 
 }
