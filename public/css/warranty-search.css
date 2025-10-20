@@ -1,5 +1,100 @@
-/* Basic styles and modal */
+/* --- Main Wrapper --- */
+.warranty-search-wrapper {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
 
-@media (max-width: 767px) {
+/* --- Search Form Styling (Responsive) --- */
+.search-form-inner {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
 
+.form-group-phone {
+    flex: 1 1 70%; /* 70% width on large screens */
+}
+
+.form-group-submit {
+    flex: 1 1 30%; /* 30% width on large screens */
+}
+
+#customer-phone-search {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#warranty-search-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    height: 100%;
+    box-sizing: border-box;
+    transition: background-color 0.3s;
+}
+#warranty-search-btn:hover {
+    background-color: #005a87;
+}
+#warranty-search-btn:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+
+/* --- Messages & Results --- */
+.search-messages {
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 4px;
+    display: none;
+}
+.search-messages.error-message {
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    color: #a94442;
+}
+
+.search-results {
+    margin-top: 20px;
+    display: none;
+}
+
+/* --- Responsive Table (Copied from warranty-list.css for consistency) --- */
+.table-wrapper { overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; }
+.warranty-list-table { width: 100%; border-collapse: collapse; text-align: right; }
+.warranty-list-table th, .warranty-list-table td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+.warranty-list-table th { background-color: #f7f7f7; font-weight: 600; }
+.status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; color: #fff; white-space: nowrap; }
+.status-badge.status-approved { background-color: #28a745; }
+.status-badge.status-pending_approval { background-color: #ffc107; color: #333; }
+.status-badge.status-expired { background-color: #6c757d; }
+
+
+/* --- Media Queries for Responsiveness --- */
+@media (max-width: 600px) {
+    /* Stack form elements */
+    .search-form-inner {
+        flex-direction: column;
+    }
+
+    /* Responsive Table */
+    .warranty-list-table thead { display: none; }
+    .warranty-list-table tr { display: block; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+    .warranty-list-table td { display: block; text-align: right; padding-left: 50%; position: relative; border-bottom: 1px solid #f0f0f0; }
+    .warranty-list-table td:last-child { border-bottom: none; }
+    .warranty-list-table td::before { content: attr(data-label); position: absolute; right: 10px; width: 45%; padding-left: 10px; white-space: nowrap; font-weight: bold; text-align: left; }
 }

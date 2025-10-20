@@ -84,6 +84,11 @@ class Afrozweb_Garanties_Public {
             AFROZWEB_GARANTY_URL . 'public/css/warranty-list.css',
             [], '1.0.0'
         );
+        wp_register_style(
+            'warranty-frontend-search-style',
+            AFROZWEB_GARANTY_URL . 'public/css/warranty-search.css',
+            [], '1.0.0'
+        );
     }
 
 	/**
@@ -128,6 +133,18 @@ class Afrozweb_Garanties_Public {
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'warranty_list_nonce' ),
             'loading_html' => '<div class="loading-spinner"></div>',
+        ]);
+
+        wp_register_script(
+            'warranty-frontend-search-script',
+            AFROZWEB_GARANTY_URL . 'public/js/warranty-search.js',
+            [ 'jquery' ], '1.0.0', true
+        );
+
+        wp_localize_script( 'warranty-frontend-search-script', 'warranty_search_ajax', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'warranty_search_nonce' ),
+            'loading_text' => __( 'در حال بررسی...', AFROZWEB_GARANTY_SLUG ),
         ]);
 	}
 

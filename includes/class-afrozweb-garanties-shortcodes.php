@@ -75,13 +75,13 @@ class Afrozweb_Garanties_Shortcodes {
             return '<p class="warranty-form-error">' . esc_html__( 'شما دسترسی لازم برای مشاهده این فرم را ندارید.', AFROZWEB_GARANTY_SLUG ) . '</p>';
         }
 
-        // 3. بررسی تایید شدن حساب نمایندگی (نیازمندی شماره ۱)
+        // 3. بررسی تایید شدن حساب نمایندگی
         $corresponded_post_id = get_user_meta( $user->ID, 'corresponded_post_id', true );
         if ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) {
             return '<div class="warranty-form-notice notice-warning"><p>' . esc_html__( 'حساب نمایندگی شما هنوز توسط مدیر تایید نشده است. پس از تایید، می‌توانید گارانتی‌های خود را ثبت کنید.', AFROZWEB_GARANTY_SLUG ) . '</p></div>';
         }
 
-        // 4. اگر تمام شرایط برقرار بود، اسکریپت‌ها و استایل‌ها را فراخوانی کن (نیازمندی شماره ۶)
+        // 4. اگر تمام شرایط برقرار بود، اسکریپت‌ها و استایل‌ها را فراخوانی کن
         wp_enqueue_style( 'warranty-frontend-form-style' );
         wp_enqueue_script( 'warranty-frontend-form-script' );
 
@@ -98,7 +98,7 @@ class Afrozweb_Garanties_Shortcodes {
 
         $errors = [];
 
-        // 2. اعتبارسنجی سمت سرور (نیازمندی شماره ۲)
+        // 2. اعتبارسنجی سمت سرور
         $required_fields = ['customer_name', 'customer_phone', 'project_address', 'installer_phone', 'warranty_number', 'product_type', 'installation_date'];
         foreach ($required_fields as $field) {
             if ( empty( $_POST[$field] ) ) {
@@ -161,7 +161,7 @@ class Afrozweb_Garanties_Shortcodes {
             'warranty_period_years' => isset($_POST['warranty_period_years']) ? absint( $_POST['warranty_period_years'] ) : 10, // مقدار پیش‌فرض
             'warranty_period_months'=> isset($_POST['warranty_period_months']) ? absint( $_POST['warranty_period_months'] ) : 0,
             'project_description'   => sanitize_textarea_field( $_POST['project_description'] ),
-            'status'                => 'pending_approval', // نیازمندی شماره ۴
+            'status'                => 'pending_approval',
             'representative_id'     => get_current_user_id(),
         ];
 
@@ -205,7 +205,7 @@ class Afrozweb_Garanties_Shortcodes {
             }
         }
 
-        // 4. فراخوانی استایل‌ها و اسکریپت‌ها (نیازمندی شماره ۳)
+        // 4. فراخوانی استایل‌ها و اسکریپت‌ها
         wp_enqueue_style( 'warranty-frontend-list-style' );
         wp_enqueue_script( 'warranty-frontend-list-script' );
 
@@ -301,6 +301,94 @@ class Afrozweb_Garanties_Shortcodes {
         wp_die();
     }
 
+    public function warranty_search_shortcode_handler()
+    {
+        wp_enqueue_style( 'warranty-frontend-search-style' );
+        wp_enqueue_script( 'warranty-frontend-search-script' );
+
+        // رندر کردن view
+        ob_start();
+        include $this->get_template_part( 'warranty-search-view' );
+        return ob_get_clean();
+    }
+
+    public function handle_warranty_search_ajax(){
+        check_ajax_referer( 'warranty_search_nonce', 'nonce' );
+
+        $phone_number = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
+
+        // 1. تبدیل اعداد فارسی به انگلیسی
+        $phone_number = $this->convert_persian_numbers_to_english( $phone_number );
+
+        // 2. اعتبارسنجی شماره تماس
+        if ( ! preg_match( '/^09\d{9}$/', $phone_number ) ) {
+            wp_send_json_error( [ 'message' => __( 'لطفاً یک شماره تماس معتبر ۱۱ رقمی که با 09 شروع می‌شود وارد کنید.', AFROZWEB_GARANTY_SLUG ) ] );
+        }
+
+        global $wpdb;
+        $warranties_table = $wpdb->prefix . 'warranties';
+        $users_table = $wpdb->users;
+
+        // 3. جستجو در دیتابیس
+        $query = $wpdb->prepare(
+            "SELECT w.*, u.display_name as representative_name 
+         FROM {$warranties_table} w
+         LEFT JOIN {$users_table} u ON w.representative_id = u.ID
+         WHERE w.customer_phone = %s
+         ORDER BY w.created_at DESC",
+            $phone_number
+        );
+        $results = $wpdb->get_results( $query );
+
+        // 4. بررسی نتیجه
+        if ( empty( $results ) ) {
+            wp_send_json_error( [ 'message' => __( 'هیچ گارانتی با این شماره تماس یافت نشد.', AFROZWEB_GARANTY_SLUG ) ] );
+        }
+
+        // 5. ساخت HTML جدول نتایج
+        ob_start();
+        ?>
+        <div class="table-wrapper">
+            <table class="warranty-list-table">
+                <thead>
+                <tr>
+                    <th><?php esc_html_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'زمان باقیمانده', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ( $results as $index => $warranty ) : ?>
+                    <tr>
+                        <td data-label="<?php esc_attr_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $index + 1; ?></td>
+                        <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->warranty_number ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->representative_name ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installer_name ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->project_address ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installation_date ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'زمان باقیمانده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $this->calculate_time_until_expiration( $warranty->expiration_date ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?>">
+                        <span class="status-badge status-<?php echo esc_attr( $warranty->status ); ?>">
+                            <?php echo esc_html( $this->get_warranty_status_label( $warranty->status ) ); ?>
+                        </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+        $table_html = ob_get_clean();
+
+        wp_send_json_success( [ 'table_html' => $table_html ] );
+        wp_die();
+    }
+
     public function get_template_part ( $template )
     {
         $located       = '';
@@ -320,7 +408,7 @@ class Afrozweb_Garanties_Shortcodes {
         return $located;
     }
 
-    function get_warranty_status_label( $status_key ) {
+    public function get_warranty_status_label( $status_key ) {
         $statuses = [
             'approved'         => __( 'تایید شده', AFROZWEB_GARANTY_SLUG ),
             'pending_approval' => __( 'در انتظار تایید', AFROZWEB_GARANTY_SLUG ),
@@ -329,4 +417,34 @@ class Afrozweb_Garanties_Shortcodes {
         return $statuses[ $status_key ] ?? ucfirst( str_replace( '_', ' ', $status_key ) );
     }
 
+    /**
+     * تابع کمکی برای تبدیل اعداد فارسی و عربی به انگلیسی.
+     */
+    public function convert_persian_numbers_to_english($string) {
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        $english = range(0, 9);
+        return str_replace($persian, $english, str_replace($arabic, $english, $string));
+    }
+
+    /**
+     * تابع کمکی برای محاسبه زمان باقیمانده تا انقضا.
+     */
+    public function calculate_time_until_expiration( $expiration_date_str ) {
+        $expiration_date = new DateTime( $expiration_date_str );
+        $now = new DateTime();
+
+        if ( $now > $expiration_date ) {
+            return __( 'منقضی شده', AFROZWEB_GARANTY_SLUG );
+        }
+
+        $interval = $now->diff( $expiration_date );
+
+        $parts = [];
+        if ( $interval->y > 0 ) $parts[] = sprintf( _n( '%d سال', '%d سال', $interval->y, AFROZWEB_GARANTY_SLUG ), $interval->y );
+        if ( $interval->m > 0 ) $parts[] = sprintf( _n( '%d ماه', '%d ماه', $interval->m, AFROZWEB_GARANTY_SLUG ), $interval->m );
+        if ( $interval->d > 0 ) $parts[] = sprintf( _n( '%d روز', '%d روز', $interval->d, AFROZWEB_GARANTY_SLUG ), $interval->d );
+
+        return empty($parts) ? __( 'امروز منقضی می‌شود', AFROZWEB_GARANTY_SLUG ) : implode( ' و ', $parts );
+    }
 }
