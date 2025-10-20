@@ -77,7 +77,7 @@ class Afrozweb_Garanties_Activator {
                         
                             -- ایندکس‌ها برای بهینه‌سازی سرعت کوئری‌ها
                             KEY representative_id_index (representative_id), -- ایندکس برای ستون نماینده
-                            KEY status_index (status) -- ایندکس برای ستون وضعیت
+                            KEY status_index (status), -- ایندکس برای ستون وضعیت
                             KEY customer_phone_index (customer_phone)
                         
                         ) $charset_collate;";

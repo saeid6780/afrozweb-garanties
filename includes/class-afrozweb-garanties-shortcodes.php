@@ -199,6 +199,7 @@ class Afrozweb_Garanties_Shortcodes {
 
         // 3. بررسی تایید شدن حساب نمایندگی (برای نقش نماینده)
         if ( $is_representative ) {
+
             $corresponded_post_id = get_user_meta( $user->ID, 'corresponded_post_id', true );
             if ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) {
                 return '<div class="warranty-form-notice notice-warning"><p>' . esc_html__( 'حساب نمایندگی شما هنوز توسط مدیر تایید نشده است.', AFROZWEB_GARANTY_SLUG ) . '</p></div>';
