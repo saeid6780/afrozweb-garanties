@@ -256,12 +256,12 @@ class Afrozweb_Garanties_Shortcodes {
                 ?>
                 <tr data-id="<?php echo esc_attr( $warranty->id ); ?>">
                     <td data-label="<?php esc_attr_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $start_row_num + $index ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->warranty_number ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'نام نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installer_name ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'نام مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->customer_name ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'تماس مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->customer_phone ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installation_date ); ?></td>
-                    <td data-label="<?php esc_attr_e( 'تاریخ انقضا', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->expiration_date ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->warranty_number ) ? '-' : esc_html( $warranty->warranty_number ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'نام نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installer_name ) ? '-' : esc_html( $warranty->installer_name ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'نام مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->customer_name ) ? '-' : esc_html( $warranty->customer_name ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تماس مشتری', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->customer_phone ) ? '-' : esc_html( $warranty->customer_phone ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installation_date ) ? '-' : esc_html( $warranty->installation_date ); ?></td>
+                    <td data-label="<?php esc_attr_e( 'تاریخ انقضا', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->expiration_date ) ? '-' : esc_html( $warranty->expiration_date ); ?></td>
                     <td data-label="<?php esc_attr_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?>">
                     <span class="status-badge status-<?php echo esc_attr( $warranty->status ); ?>">
                         <?php echo esc_html( $this->get_warranty_status_label( $warranty->status ) ); ?>
@@ -367,11 +367,11 @@ class Afrozweb_Garanties_Shortcodes {
                 <?php foreach ( $results as $index => $warranty ) : ?>
                     <tr>
                         <td data-label="<?php esc_attr_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $index + 1; ?></td>
-                        <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->warranty_number ); ?></td>
-                        <td data-label="<?php esc_attr_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->representative_name ); ?></td>
-                        <td data-label="<?php esc_attr_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installer_name ); ?></td>
-                        <td data-label="<?php esc_attr_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->project_address ); ?></td>
-                        <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo esc_html( $warranty->installation_date ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->warranty_number ) ? '-' : esc_html( $warranty->warranty_number ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->representative_name ) ? '-' : esc_html( $warranty->representative_name ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installer_name ) ? '-' : esc_html( $warranty->installer_name ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->project_address ) ? '-' : esc_html( $warranty->project_address ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installation_date ) ? '-' : esc_html( $warranty->installation_date ); ?></td>
                         <td data-label="<?php esc_attr_e( 'زمان باقیمانده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $this->calculate_time_until_expiration( $warranty->expiration_date ); ?></td>
                         <td data-label="<?php esc_attr_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?>">
                         <span class="status-badge status-<?php echo esc_attr( $warranty->status ); ?>">
