@@ -80,7 +80,8 @@
             </div>
             <div class="form-group">
                 <label for="installation_date"><?php esc_html_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?> <span class="required">*</span></label>
-                <input type="date" id="installation_date" name="installation_date" required>
+                <input type="text" id="installation_date" name="installation_date" required>
+                <input type="hidden" id="installation_date_alt" name="installation_date_alt">
                 <small class="error-message"></small>
             </div>
         </div>

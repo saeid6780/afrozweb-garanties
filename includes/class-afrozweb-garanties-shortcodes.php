@@ -56,12 +56,6 @@ class Afrozweb_Garanties_Shortcodes {
 
     }
 
-    /**
-     * Render shortcode [book_list]
-     * attributes:
-     *  - primary_color (optional)
-     *  - secondary_color (optional)
-     */
     public function warranty_submission_shortcode_handler( $atts ) {
 
         // 1. فقط برای کاربران لاگین شده
@@ -77,13 +71,39 @@ class Afrozweb_Garanties_Shortcodes {
 
         // 3. بررسی تایید شدن حساب نمایندگی
         $corresponded_post_id = get_user_meta( $user->ID, 'corresponded_post_id', true );
-        if ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) {
+        if ( ( empty( $corresponded_post_id ) || 'publish' !== get_post_status( $corresponded_post_id ) ) && ! in_array( 'administrator', (array) $user->roles ) ) {
             return '<div class="warranty-form-notice notice-warning"><p>' . esc_html__( 'حساب نمایندگی شما هنوز توسط مدیر تایید نشده است. پس از تایید، می‌توانید گارانتی‌های خود را ثبت کنید.', AFROZWEB_GARANTY_SLUG ) . '</p></div>';
         }
 
         // 4. اگر تمام شرایط برقرار بود، اسکریپت‌ها و استایل‌ها را فراخوانی کن
         wp_enqueue_style( 'warranty-frontend-form-style' );
         wp_enqueue_script( 'warranty-frontend-form-script' );
+
+        wp_enqueue_script('jquery');
+        wp_enqueue_style( 'persian-datepicker' );
+        wp_enqueue_script( 'persian-date' );
+        wp_enqueue_script( 'persian-datepicker' );
+
+        // افزودن اسکریپت inline برای فعال‌سازی Datepicker
+        $inline_script = "
+        (function($){
+            $(document).ready(function(){
+                $('#installation_date').persianDatepicker({
+                   calendar:{
+                        persian: {
+                          leapYearMode: 'astronomical'
+                        }
+                    },
+                    format: 'YYYY/MM/DD',
+                    initialValue: false,
+                    initialValueType: 'persian',
+                    altField: '#installation_date_alt',
+                    autoClose: true
+                });
+            });
+        })(jQuery);
+    ";
+        wp_add_inline_script( 'persian-datepicker', $inline_script, 'after' );
 
         // 5. رندر کردن فرم از یک فایل view مجزا
         ob_start();
@@ -122,10 +142,16 @@ class Afrozweb_Garanties_Shortcodes {
         }
 
         // اعتبارسنجی تاریخ نصب (نباید در آینده باشد)
-        if ( ! empty( $_POST['installation_date'] ) ) {
-            $installation_date = new DateTime( $_POST['installation_date'] );
+        if ( ! empty( $_POST['installation_date_alt'] ) ) {
+            // تبدیل timestamp میلی‌ثانیه‌ای به ثانیه
+            $timestamp_ms = intval($_POST['installation_date_alt']);
+            $timestamp = $timestamp_ms / 1000;
+
+            // تبدیل به فرمت DATE (فقط تاریخ)
+            $installation_date = gmdate('Y-m-d', $timestamp);
+            $installation_date_standard = new DateTime( $installation_date );
             $today = new DateTime();
-            if ( $installation_date > $today ) {
+            if ( $installation_date_standard > $today ) {
                 $errors['installation_date'] = __( 'تاریخ نصب نمی‌تواند در آینده باشد.', AFROZWEB_GARANTY_SLUG );
             }
         }
@@ -157,7 +183,7 @@ class Afrozweb_Garanties_Shortcodes {
             'installer_national_id' => sanitize_text_field( $_POST['installer_national_id'] ),
             'warranty_number'       => sanitize_text_field( $_POST['warranty_number'] ),
             'product_type'          => sanitize_text_field( $_POST['product_type'] ),
-            'installation_date'     => sanitize_text_field( $_POST['installation_date'] ),
+            'installation_date'     => $installation_date,
             'warranty_period_years' => isset($_POST['warranty_period_years']) ? absint( $_POST['warranty_period_years'] ) : 10, // مقدار پیش‌فرض
             'warranty_period_months'=> isset($_POST['warranty_period_months']) ? absint( $_POST['warranty_period_months'] ) : 0,
             'project_description'   => sanitize_textarea_field( $_POST['project_description'] ),

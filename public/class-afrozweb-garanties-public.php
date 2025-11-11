@@ -89,6 +89,11 @@ class Afrozweb_Garanties_Public {
             AFROZWEB_GARANTY_URL . 'public/css/warranty-search.css',
             [], '1.0.0'
         );
+        wp_register_style(
+            'persian-datepicker',
+            AFROZWEB_GARANTY_URL . 'public/css/persian-datepicker.min.css',
+            [], '1.0.0'
+        );
     }
 
 	/**
@@ -108,6 +113,12 @@ class Afrozweb_Garanties_Public {
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
+        global $post;
+
+        if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'warranty_submission_form' ) ) {
+            wp_deregister_script('jquery');
+            wp_register_script('jquery', AFROZWEB_GARANTY_URL . 'public/js/jquery.js', [], null, true);
+        }
 
         wp_register_script(
             'warranty-frontend-form-script',
@@ -146,6 +157,18 @@ class Afrozweb_Garanties_Public {
             'nonce'    => wp_create_nonce( 'warranty_search_nonce' ),
             'loading_text' => __( 'در حال بررسی...', AFROZWEB_GARANTY_SLUG ),
         ]);
+
+        wp_register_script(
+            'persian-date',
+            AFROZWEB_GARANTY_URL . 'public/js/persian-date.min.js',
+            [ 'jquery' ], '1.0.0', true
+        );
+
+        wp_register_script(
+            'persian-datepicker',
+            AFROZWEB_GARANTY_URL . 'public/js/persian-datepicker.min.js',
+            [ 'jquery' ], '1.0.0', true
+        );
 	}
 
 }

@@ -159,7 +159,6 @@ class Afrozweb_Garanties_Admin {
             });
         })(jQuery);
         ",'after');
-        wp_add_inline_script('jquery', "console.log('jQuery loaded in admin ✅');");
     }
 
     public function settings_menu ()
