@@ -79,6 +79,11 @@ class Afrozweb_Garanties_Admin {
         }
 
         wp_enqueue_style( 'awg-select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css' );
+        wp_enqueue_style(
+            'persian-datepicker',
+            AFROZWEB_GARANTY_URL . 'public/css/persian-datepicker.min.css',
+            '1.0.0',
+        );
 
     }
 
@@ -105,6 +110,10 @@ class Afrozweb_Garanties_Admin {
             return;
         }
 
+        wp_deregister_script('jquery');
+        wp_register_script('jquery', AFROZWEB_GARANTY_URL . 'public/js/jquery.js', [], null, true);
+        wp_enqueue_script('jquery');
+
         wp_enqueue_script( 'awg-select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js', array( 'jquery' ) );
 
         wp_add_inline_script('awg-select2', '
@@ -114,8 +123,43 @@ class Afrozweb_Garanties_Admin {
                 width: "100%"
             });
         });
-    ');
+        ');
+        wp_enqueue_script(
+            'persian-date',
+            AFROZWEB_GARANTY_URL . 'public/js/persian-date.min.js',
+            [ 'jquery' ],
+            '1.0.0',
+            true // در فوتر لود شود
 
+        );
+        wp_enqueue_script(
+            'persian-datepicker',
+            AFROZWEB_GARANTY_URL . 'public/js/persian-datepicker.min.js',
+            [ 'jquery','persian-date' ],
+            '1.0.0',
+            true // در فوتر لود شود
+        );
+
+        wp_add_inline_script( 'persian-datepicker',
+            "
+        (function($){
+            $(function(){
+                $('#installation_date').persianDatepicker({
+                    calendar:{
+                        persian: {
+                          leapYearMode: 'astronomical'
+                        }
+                    },
+                    format: 'YYYY/MM/DD',
+                    initialValue: false,
+                    initialValueType: 'persian',
+                    altField: '#installation_date_alt',
+                    autoClose: true
+                });
+            });
+        })(jQuery);
+        ",'after');
+        wp_add_inline_script('jquery', "console.log('jQuery loaded in admin ✅');");
     }
 
     public function settings_menu ()
@@ -163,6 +207,16 @@ class Afrozweb_Garanties_Admin {
             global $wpdb;
             $table_name = $wpdb->prefix . 'warranties';
 
+            if ( ! empty( $_POST[ 'installation_date_alt' ] ) ) {
+                // تبدیل timestamp میلی‌ثانیه‌ای به ثانیه
+                $timestamp_ms = intval($_POST['installation_date_alt']);
+                $timestamp = $timestamp_ms / 1000;
+
+                // تبدیل به فرمت DATE (فقط تاریخ)
+                $installation_date = gmdate('Y-m-d', $timestamp);
+            }
+
+
             // 1. آماده‌سازی داده‌ها برای ذخیره در دیتابیس (با فیلد جدید نماینده)
             $data = [
                 'customer_name'         => sanitize_text_field( $_POST['customer_name'] ),
@@ -175,7 +229,7 @@ class Afrozweb_Garanties_Admin {
                 'installer_national_id' => sanitize_text_field( $_POST['installer_national_id'] ),
                 'warranty_number'       => sanitize_text_field( $_POST['warranty_number'] ),
                 'product_type'          => sanitize_text_field( $_POST['product_type'] ),
-                'installation_date'     => sanitize_text_field( $_POST['installation_date'] ),
+                'installation_date'     => $installation_date,
                 'warranty_period_years' => absint( $_POST['warranty_period_years'] ),
                 'warranty_period_months'=> absint( $_POST['warranty_period_months'] ),
                 'project_description'   => sanitize_textarea_field( $_POST['project_description'] ),

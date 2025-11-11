@@ -159,7 +159,7 @@ class Afrozweb_Garanties {
 
 		$plugin_admin = new Afrozweb_Garanties_Admin( $this->get_plugin_name(), $this->get_version() );
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'settings_menu' );
-        $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+        $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts', 5 );
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
         $this->loader->add_action( 'admin_init', $plugin_admin, 'warranty_management_handle_form_submission' );
 

@@ -108,9 +108,18 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
                     </select>
                 </td>
             </tr>
+
+            <?php
+            $installation_date = $warranty->installation_date;
+            $installation_date_timestamp = strtotime( $installation_date ) ;
+            $installation_date_alt = $installation_date_timestamp * 1000;
+            ?>
             <tr class="form-field">
                 <th scope="row"><label for="installation_date"><?php esc_html_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?> <span class="description">(<?php esc_html_e( 'ضروری', AFROZWEB_GARANTY_SLUG ); ?>)</span></label></th>
-                <td><input name="installation_date" type="date" id="installation_date" value="<?php echo esc_attr( $warranty->installation_date ?? '' ); ?>" required></td>
+                <td>
+                    <input name="installation_date" type="text" id="installation_date" value="<?php echo date_i18n('Y/m/d', $installation_date_timestamp ) ?>" required>
+                    <input name="installation_date_alt" type="hidden" id="installation_date_alt" value="<?php echo $installation_date_alt ?>" required>
+                </td>
             </tr>
             <tr class="form-field">
                 <th scope="row"><label for="warranty_period_years"><?php esc_html_e( 'مدت گارانتی', AFROZWEB_GARANTY_SLUG ); ?></label></th>
