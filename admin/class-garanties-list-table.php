@@ -236,10 +236,11 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
     protected function column_default( $item, $column_name ) {
         switch ( $column_name ) {
             case 'installer_name':
-            case 'installation_date':
-            case 'expiration_date':
             case 'representative_name':
                 return esc_html( $item->$column_name );
+            case 'installation_date':
+            case 'expiration_date':
+                return date_i18n( 'Y/m/d', strtotime( $item->$column_name ) );
             case 'status':
                 return $this->get_status_label( $item->status );
             default:

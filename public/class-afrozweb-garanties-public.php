@@ -115,7 +115,7 @@ class Afrozweb_Garanties_Public {
 		 */
         global $post;
 
-        if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'warranty_submission_form' ) ) {
+        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'warranty_submission_form' ) || is_page( 'panel' ) ) ) {
             wp_deregister_script('jquery');
             wp_register_script('jquery', AFROZWEB_GARANTY_URL . 'public/js/jquery.js', [], null, true);
         }

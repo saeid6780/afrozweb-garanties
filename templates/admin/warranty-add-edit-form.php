@@ -25,6 +25,7 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
         <?php wp_nonce_field( 'save_warranty_action', 'submit_warranty_nonce' ); ?>
         <?php if ( $warranty ) : ?>
             <input type="hidden" name="warranty_id" value="<?php echo esc_attr( $warranty->id ); ?>" />
+            <input type="hidden" name="current_status" value="<?php echo esc_attr( $warranty->status ); ?>" />
         <?php endif;?>
 
         <table class="form-table" role="presentation">
@@ -121,10 +122,20 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
                     <input name="installation_date_alt" type="hidden" id="installation_date_alt" value="<?php echo $installation_date_alt ?>" required>
                 </td>
             </tr>
+
+            <?php
+            $default_warranty_period_years = 7;
+            $ten_years_types = [
+                'simple_4mm',
+                'foil_4mm'
+            ];
+            if ( empty( $warranty->warranty_period_years ) && ! empty( $warranty->product_type ) and in_array( $warranty->product_type, $ten_years_types ) )
+                $default_warranty_period_years = 10;
+            ?>
             <tr class="form-field">
                 <th scope="row"><label for="warranty_period_years"><?php esc_html_e( 'مدت گارانتی', AFROZWEB_GARANTY_SLUG ); ?></label></th>
                 <td>
-                    <input name="warranty_period_years" type="number" id="warranty_period_years" value="<?php echo esc_attr( $warranty->warranty_period_years ?? '10' ); ?>" class="small-text"> <?php esc_html_e( 'سال', AFROZWEB_GARANTY_SLUG ); ?>
+                    <input name="warranty_period_years" type="number" id="warranty_period_years" value="<?php echo esc_attr( $warranty->warranty_period_years ?? $default_warranty_period_years ); ?>" class="small-text"> <?php esc_html_e( 'سال', AFROZWEB_GARANTY_SLUG ); ?>
                     <input name="warranty_period_months" type="number" id="warranty_period_months" value="<?php echo esc_attr( $warranty->warranty_period_months ?? '0' ); ?>" class="small-text"> <?php esc_html_e( 'ماه', AFROZWEB_GARANTY_SLUG ); ?>
                 </td>
             </tr>

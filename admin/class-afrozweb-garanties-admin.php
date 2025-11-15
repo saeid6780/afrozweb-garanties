@@ -116,14 +116,6 @@ class Afrozweb_Garanties_Admin {
 
         wp_enqueue_script( 'awg-select2', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js', array( 'jquery' ) );
 
-        wp_add_inline_script('awg-select2', '
-        jQuery(document).ready(function($) {
-            $(".representative-select2").select2({
-                placeholder: "' . esc_js( __( 'یک نماینده را جستجو و انتخاب کنید...', AFROZWEB_GARANTY_SLUG ) ) . '",
-                width: "100%"
-            });
-        });
-        ');
         wp_enqueue_script(
             'persian-date',
             AFROZWEB_GARANTY_URL . 'public/js/persian-date.min.js',
@@ -132,6 +124,7 @@ class Afrozweb_Garanties_Admin {
             true // در فوتر لود شود
 
         );
+
         wp_enqueue_script(
             'persian-datepicker',
             AFROZWEB_GARANTY_URL . 'public/js/persian-datepicker.min.js',
@@ -140,25 +133,14 @@ class Afrozweb_Garanties_Admin {
             true // در فوتر لود شود
         );
 
-        wp_add_inline_script( 'persian-datepicker',
-            "
-        (function($){
-            $(function(){
-                $('#installation_date').persianDatepicker({
-                    calendar:{
-                        persian: {
-                          leapYearMode: 'astronomical'
-                        }
-                    },
-                    format: 'YYYY/MM/DD',
-                    initialValue: false,
-                    initialValueType: 'persian',
-                    altField: '#installation_date_alt',
-                    autoClose: true
-                });
-            });
-        })(jQuery);
-        ",'after');
+        wp_enqueue_script(
+            'afrozweb-garanties-admin',
+            AFROZWEB_GARANTY_URL . 'public/js/admin-scripts.js',
+            [ 'persian-datepicker','awg-select2' ],
+            '1.0.0',
+            true // در فوتر لود شود
+        );
+
     }
 
     public function settings_menu ()
@@ -200,6 +182,7 @@ class Afrozweb_Garanties_Admin {
         if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'warranty-management-add-new' ) {
             return;
         }
+        $data = [];
 
         // بررسی می‌کنیم که فرم با استفاده از nonce امن ما ارسال شده باشد
         if ( isset( $_POST['submit_warranty_nonce'] ) && wp_verify_nonce( $_POST['submit_warranty_nonce'], 'save_warranty_action' ) ) {
@@ -214,7 +197,6 @@ class Afrozweb_Garanties_Admin {
                 // تبدیل به فرمت DATE (فقط تاریخ)
                 $installation_date = gmdate('Y-m-d', $timestamp);
             }
-
 
             // 1. آماده‌سازی داده‌ها برای ذخیره در دیتابیس (با فیلد جدید نماینده)
             $data = [
@@ -248,6 +230,26 @@ class Afrozweb_Garanties_Admin {
             $warranty_id = isset( $_POST['warranty_id'] ) ? absint( $_POST['warranty_id'] ) : 0;
             $redirect_url = '';
 
+            // --- [بخش جدید] منطق ارسال SMS ---
+            $should_send_sms = false; // به طور پیش‌فرض SMS ارسال نمی‌شود
+
+            if ( $warranty_id > 0 ) {
+                // --- حالت ویرایش ---
+                $new_status = $data['status'];
+                $old_status = isset( $_POST['current_status'] ) ? sanitize_text_field( $_POST['current_status'] ) : '';
+
+                // شرط اصلی: فقط زمانی SMS ارسال شود که وضعیت برای اولین بار به 'approved' تغییر می‌کند
+                if ( $new_status === 'approved' && $old_status !== 'approved' ) {
+                    $should_send_sms = true;
+                }
+            } else {
+                // --- حالت افزودن جدید ---
+                // اگر ادمین از همان ابتدا یک گارانتی را با وضعیت 'approved' ایجاد کرد
+                if ( $data['status'] === 'approved' ) {
+                    $should_send_sms = true;
+                }
+            }
+
             if ( $warranty_id > 0 ) {
                 // حالت به‌روزرسانی (Update)
                 $result = $wpdb->update( $table_name, $data, [ 'id' => $warranty_id ] );
@@ -264,10 +266,59 @@ class Afrozweb_Garanties_Admin {
                 }
             }
 
+            // --- اجرای تابع ارسال SMS در صورت نیاز ---
+            if ( $should_send_sms && $result !== false ) {
+                // فراخوانی تابع سفارشی شما برای ارسال SMS
+                $this->send_approval_sms_notification( $data );
+            }
+
             // ریدایرکت به همراه پارامترها
             wp_safe_redirect( $redirect_url );
             exit;
         }
+    }
+
+    public function send_approval_sms_notification( $warranty_data ) {
+        // اطمینان از اینکه ID معتبر است
+        if ( empty( $warranty_data ) ) {
+            return;
+        }
+
+        // 2. دریافت شماره تماس نماینده از جدول کاربران
+        $representative_data = get_user_by( 'id', $warranty_data[ 'representative_id' ] );
+        $representative_phone = $representative_data->user_login;
+        $representative_name = $representative_data->user_nicename;
+
+        // 3. استخراج شماره تماس مشتری
+        $customer_phone = $warranty_data[ 'customer_phone' ];
+
+        // 4. آماده‌سازی متن پیام‌ها
+        $customer_message = sprintf(
+            "%s عزیز، گارانتی محصول شما با شماره %s فعال شد. زمان باقی ماند گارانتی خود را از وب سایت ایزوگام شرق میتوانید مشاهد کنید.",
+            $warranty_data[ 'customer_name' ],
+            $warranty_data[ 'warranty_number' ],
+        );
+        $sms_to_customer = $this->send_sms_to_number( $customer_phone, $customer_message );
+
+        if ( isset( $sms_to_customer[ 'error' ] ) )
+            error_log( "Error: SMS to Customer ($customer_phone): $customer_message" );
+        else
+            error_log( "SMS to Customer ($customer_phone): $customer_message" );
+
+        $representative_message = sprintf(
+            "%s عزیز، گارانتی شماره %s برای مشتری %s با موفقیت فعال شد.",
+            $representative_name,
+            $warranty_data[ 'warranty_number' ],
+            $warranty_data[ 'customer_name' ]
+        );
+        $sms_to_representative = $this->send_sms_to_number( $representative_phone, $representative_message );
+
+        if ( isset( $sms_to_representative[ 'error' ] ) )
+            error_log( "Error: SMS to representative ($customer_phone): $customer_message" );
+        else
+            error_log( "SMS to representative ($customer_phone): $customer_message" );
+
+        error_log( "SMS to Representative ($representative_phone): $representative_message" );
     }
 
     public function warranty_management_add_edit_page()
@@ -354,5 +405,72 @@ class Afrozweb_Garanties_Admin {
             </form>
         </div>
         <?php
+    }
+
+    public function send_sms_to_number( $number, $message )
+    {
+        if ( empty( $number ) || empty( $message ) )
+            return false;
+
+        $recipient = $this->sanitize_mobile( $number );
+
+        if ( ! $recipient ){
+            error_log( 'Wrong mobile number format' );
+            return false;
+        }
+
+        $username = "isogumeshargh";
+        $password = "ish@2709_6736";
+        $lineNumber = "20008040";
+
+        $wsdl = "http://payamkotah.ir/service.asmx?WSDL";
+        $options = [
+            'trace' => 1,
+            'exceptions' => true,
+            'cache_wsdl' => WSDL_CACHE_NONE,
+        ];
+
+        try {
+            $client = new SoapClient($wsdl, $options);
+
+            $params = [
+                'Username' => $username,
+                'Password' => $password,
+                'LineNumber' => $lineNumber,
+                'Mobile' => $recipient,
+                'Message' => $message,
+                'FlashSend' => false,
+                'WapPushSend' => false,
+                'SendWithBusinessName' => false,
+            ];
+
+            $reference = 0;
+            $params['Refrence'] = &$reference;
+            $client->__soapCall("FastSend", [ $params ] );
+
+            if ($reference > 0) {
+                return [ 'success' => 'پیام با موفقیت ارسال شد.' ];
+            } else {
+                return [ 'success' => 'پیام با موفقیت ارسال شد.' ];
+            }
+        } catch (Exception $e) {
+            return [ 'error' => 'پیام ارسال نشد.' ];
+        }
+    }
+
+    public function sanitize_mobile ( $mobile )
+    {
+        $mobile = $this->convert_numbers( $mobile );
+
+        return preg_match( '/^09[0-9]{9}$/', $mobile ) ? $mobile : false;
+    }
+
+    function convert_numbers ( $string, $to_persian = false )
+    {
+        $string  = sanitize_text_field( $string );
+        $persian = [ '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹' ];
+        $english = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ];
+
+        return $to_persian ? str_replace( $english, $persian, $string ) : str_replace( $persian, $english, $string );
     }
 }
