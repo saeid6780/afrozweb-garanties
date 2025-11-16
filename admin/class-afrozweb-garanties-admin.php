@@ -196,7 +196,8 @@ class Afrozweb_Garanties_Admin {
 
                 // تبدیل به فرمت DATE (فقط تاریخ)
                 $installation_date = gmdate('Y-m-d', $timestamp);
-            }
+            }else
+                $installation_date = gmdate( 'Y-m-d', time() );
 
             // 1. آماده‌سازی داده‌ها برای ذخیره در دیتابیس (با فیلد جدید نماینده)
             $data = [
@@ -258,6 +259,7 @@ class Afrozweb_Garanties_Admin {
             } else {
                 // حالت افزودن (Insert)
                 $result = $wpdb->insert( $table_name, $data );
+                error_log('errore ijad: '. $wpdb->last_error );
                 if ( $result ) {
                     $new_id = $wpdb->insert_id;
                     $redirect_url = admin_url( 'admin.php?page=warranty-management-add-new&id=' . $new_id . '&message=1' ); // 1=ایجاد موفق

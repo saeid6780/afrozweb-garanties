@@ -7,6 +7,8 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
 
     private $table_name;
 
+    private $data;
+
     /**
      * سازنده کلاس. تنظیمات اولیه و نام جدول را مشخص می‌کند.
      */
@@ -119,8 +121,6 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
     public function prepare_items() {
         global $wpdb;
 
-        // ابتدا Bulk Action را پردازش می‌کنیم
-        $this->process_bulk_action();
 
         $this->_column_headers = [ $this->get_columns(), [], $this->get_sortable_columns(), 'warranty_number' ];
 
@@ -183,7 +183,12 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
         // افزودن پارامترهای صفحه‌بندی به انتهای آرایه پارامترها
         $query_params_with_pagination = array_merge( $query_params, [$per_page, $offset] );
 
-        $this->items = $wpdb->get_results( $wpdb->prepare( $data_query, $query_params_with_pagination ) );
+        $this->data = $wpdb->get_results( $wpdb->prepare( $data_query, $query_params_with_pagination ) );
+
+        // ابتدا Bulk Action را پردازش می‌کنیم
+        $this->process_bulk_action();
+
+        $this->items = $this->data;
 
         $this->set_pagination_args( [
             'total_items' => $total_items,
@@ -207,27 +212,53 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
             $wpdb->delete( $this->table_name, [ 'id' => $id ], [ '%d' ] );
 
             // ریدایرکت با پیام موفقیت
-            $redirect_url = add_query_arg( 'deleted', 1, remove_query_arg( [ 'action', 'warranty', '_wpnonce' ], wp_get_referer() ) );
-            wp_safe_redirect( $redirect_url );
-            exit;
+            echo '<div class="updated notice is-dismissible below-h2"><p>کد نصب مورد نظر حذف شد!</p></div>';
+            //$redirect_url = add_query_arg( 'deleted', 1, remove_query_arg( [ 'action', 'warranty', '_wpnonce' ], wp_get_referer() ) );
+            //wp_safe_redirect( $redirect_url );
+            //exit;
         }
 
         // بخش 2: مدیریت حذف گروهی (Bulk Delete)
         // current_action() همچنین اکشن انتخاب شده از دراپ‌داون bulk action را می‌خواند.
         if ( 'bulk_delete' === $this->current_action() ) {
 
-            if ( ! empty( $_POST['warranty_ids'] ) ) {
-                $ids = array_map( 'absint', $_POST['warranty_ids'] );
+            if ( ! empty( $_GET['warranty_ids'] ) ) {
+                $ids = array_map( 'absint', $_GET['warranty_ids'] );
                 $count = count($ids);
                 $ids_placeholder = implode( ',', array_fill( 0, $count, '%d' ) );
                 $wpdb->query( $wpdb->prepare( "DELETE FROM {$this->table_name} WHERE id IN ($ids_placeholder)", $ids ) );
 
                 // ریدایرکت با پیام موفقیت
-                $redirect_url = add_query_arg( 'deleted', $count, remove_query_arg( ['action', 'action2', '_wpnonce', 'warranty_ids'], wp_get_referer() ) );
+                echo '<div class="updated notice is-dismissible below-h2"><p>کد(های) نصب حذف شدند!</p></div>';
+                /*$redirect_url = add_query_arg( 'deleted', $count, remove_query_arg( ['action', 'action2', '_wpnonce', 'warranty_ids'], wp_get_referer() ) );
                 wp_safe_redirect( $redirect_url );
-                exit;
+                exit;*/
             }
         }
+
+        $orderby = isset( $_GET['orderby'] ) ? sanitize_key( $_GET['orderby'] ) : 'created_at';
+        $order   = isset( $_GET['order'] ) ? strtoupper( sanitize_key( $_GET['order'] ) ) : 'DESC';
+
+        // لیست سفید برای ستون‌های قابل مرتب‌سازی
+        $valid_orderby_cols = [ 'warranty_number', 'installer_name', 'installation_date', 'expiration_date', 'status' ];
+        if ( in_array( $orderby, $valid_orderby_cols ) ) {
+            $orderby_sql = 'w.' . $orderby;
+        } elseif ( $orderby === 'representative_name' ) {
+            $orderby_sql = 'u.display_name';
+        } else {
+            $orderby_sql = 'w.created_at'; // پیش‌فرض
+        }
+
+        $per_page     = $this->get_items_per_page( 'warranties_per_page', 20 );
+        $current_page = $this->get_pagenum();
+        $offset       = ( $current_page - 1 ) * $per_page;
+
+        $data_query = "SELECT w.*, u.display_name as representative_name FROM {$this->table_name} w 
+                       LEFT JOIN {$wpdb->users} u ON w.representative_id = u.ID
+                       ORDER BY {$orderby_sql} {$order}
+                       LIMIT %d OFFSET %d";
+
+        $this->data = $wpdb->get_results( $wpdb->prepare( $data_query, [$per_page, $offset] ) );
     }
 
     /**
@@ -252,7 +283,7 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
      * رندر کردن ستون Checkbox برای Bulk Actions.
      */
     protected function column_cb( $item ) {
-        return sprintf( '<input type="checkbox" name="warranty_ids[]" value="%d" />', $item->id );
+        return sprintf( '<input type="checkbox" name="warranty_ids[]" id="%d" value="%d" />', $item->id, $item->id );
     }
 
     /**
