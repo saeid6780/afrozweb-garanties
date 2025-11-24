@@ -145,10 +145,37 @@ class Afrozweb_Garanties_Admin {
 
     public function settings_menu ()
     {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'warranties';
+
+        // 1. شمارش تعداد گارانتی‌ها با وضعیت 'pending_approval' (با استفاده از کش Transient برای بهینه‌سازی)
+        $pending_count = get_transient( 'warranty_pending_count' );
+        if ( false === $pending_count ) {
+            $pending_count = (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(id) FROM {$table_name} WHERE status = %s", 'pending_approval' )
+            );
+            set_transient( 'warranty_pending_count', $pending_count, 5 * MINUTE_IN_SECONDS );
+        }
+
+        // 2. ساخت HTML برای "حباب" نوتیفیکیشن در صورت وجود گارانتی‌های تایید نشده
+        $bubble_html = '';
+        if ( $pending_count > 0 ) {
+            // کلاس 'awaiting-mod' استایل استاندارد وردپرس برای نوتیفیکیشن‌های در انتظار بررسی است (معمولاً نارنجی/زرد)
+            $bubble_html = sprintf(
+                ' <span class="awaiting-mod count-%d"><span class="pending-count">%d</span></span>',
+                $pending_count,
+                $pending_count
+            );
+        }
+
+        // 3. ترکیب عنوان اصلی منو با حباب نوتیفیکیشن
+        $menu_title = __( 'گارانتی‌ها', AFROZWEB_GARANTY_SLUG ) . $bubble_html;
+
         // منوی اصلی
         add_menu_page(
             __( 'Warranties', AFROZWEB_GARANTY_SLUG ),          // عنوان صفحه (Page Title)
-            __( 'گارانتی‌ها', AFROZWEB_GARANTY_SLUG ),          // عنوان منو (Menu Title)
+            $menu_title,          // عنوان منو (Menu Title)
             'manage_options',                                   // سطح دسترسی مورد نیاز
             'warranty-management-list',                         // اسلاگ (Slug) منو
             [ $this, 'garanties_list_content' ],                    // تابع نمایش محتوای صفحه لیست
@@ -218,29 +245,7 @@ class Afrozweb_Garanties_Admin {
     }
 
     function warranty_management_print_page_callback() {
-        // 1. بررسی امنیت و دریافت ID گارانتی از URL
-        /*if ( ! isset( $_GET['warranty_id'] ) ) {
-            wp_die( esc_html__( 'شناسه گارانتی مشخص نشده است.', AFROZWEB_GARANTY_SLUG ) );
-        }
-        $warranty_id = absint( $_GET['warranty_id'] );
-
-        // 2. واکشی اطلاعات کامل گارانتی به همراه نام نماینده
-        global $wpdb;
-        $warranty = $wpdb->get_row( $wpdb->prepare(
-            "SELECT w.*, u.display_name as representative_name 
-         FROM {$wpdb->prefix}warranties w
-         LEFT JOIN {$wpdb->users} u ON w.representative_id = u.ID
-         WHERE w.id = %d",
-            $warranty_id
-        ) );
-
-        // 3. اگر گارانتی یافت نشد، خطا نمایش بده
-        if ( ! $warranty ) {
-            wp_die( esc_html__( 'گارانتی با این شناسه یافت نشد.', AFROZWEB_GARANTY_SLUG ) );
-        }
-
-        // 4. رندر کردن فایل View و پاس دادن اطلاعات به آن
-        require_once AFROZWEB_GARANTY_BASE . 'templates/admin/warranty-print-page.php';*/
+        // handle this page content with warranty_management_load_print_page_screen() method
     }
 
     public function warranty_management_handle_form_submission() {
@@ -338,6 +343,8 @@ class Afrozweb_Garanties_Admin {
                 // فراخوانی تابع سفارشی شما برای ارسال SMS
                 $this->send_approval_sms_notification( $data );
             }
+
+            delete_transient( 'warranty_pending_count' );
 
             // ریدایرکت به همراه پارامترها
             wp_safe_redirect( $redirect_url );

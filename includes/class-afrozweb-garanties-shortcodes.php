@@ -201,6 +201,7 @@ class Afrozweb_Garanties_Shortcodes {
         $result = $wpdb->insert( $table_name, $data );
 
         if ( $result ) {
+            delete_transient( 'warranty_pending_count' );
             wp_send_json_success( [ 'message' => __( 'گارانتی شما با موفقیت ثبت شد و پس از بررسی توسط مدیر، تایید خواهد شد.', AFROZWEB_GARANTY_SLUG ) ] );
         } else {
             wp_send_json_error( [ 'message' => __( 'خطایی در پایگاه داده رخ داد. لطفاً دوباره تلاش کنید.', AFROZWEB_GARANTY_SLUG ), 'error'=>$this->wpdb->last_error ] );

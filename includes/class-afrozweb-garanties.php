@@ -162,6 +162,7 @@ class Afrozweb_Garanties {
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts', 5 );
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
         $this->loader->add_action( 'admin_init', $plugin_admin, 'warranty_management_handle_form_submission' );
+        $this->loader->add_filter( 'add_admin_menu_bubbles', $plugin_admin, 'warranty_add_pending_count_to_menu', 1 );
 
 	}
 
