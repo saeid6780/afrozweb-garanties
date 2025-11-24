@@ -325,7 +325,6 @@ class Afrozweb_Garanties_Admin {
             } else {
                 // حالت افزودن (Insert)
                 $result = $wpdb->insert( $table_name, $data );
-                error_log('errore ijad: '. $wpdb->last_error );
                 if ( $result ) {
                     $new_id = $wpdb->insert_id;
                     $redirect_url = admin_url( 'admin.php?page=warranty-management-add-new&id=' . $new_id . '&message=1' ); // 1=ایجاد موفق
@@ -359,12 +358,13 @@ class Afrozweb_Garanties_Admin {
 
         // 3. استخراج شماره تماس مشتری
         $customer_phone = $warranty_data[ 'customer_phone' ];
+        $warranty_number = empty( $warranty_data[ 'warranty_number' ] ) ? '-' : $warranty_data[ 'warranty_number' ];
 
         // 4. آماده‌سازی متن پیام‌ها
         $customer_message = sprintf(
             "%s عزیز، گارانتی محصول شما با شماره %s فعال شد. زمان باقی ماند گارانتی خود را از وب سایت ایزوگام شرق میتوانید مشاهد کنید.",
             $warranty_data[ 'customer_name' ],
-            $warranty_data[ 'warranty_number' ],
+            $warranty_number,
         );
         $sms_to_customer = $this->send_sms_to_number( $customer_phone, $customer_message );
 
@@ -376,7 +376,7 @@ class Afrozweb_Garanties_Admin {
         $representative_message = sprintf(
             "%s عزیز، گارانتی شماره %s برای مشتری %s با موفقیت فعال شد.",
             $representative_name,
-            $warranty_data[ 'warranty_number' ],
+            $warranty_number,
             $warranty_data[ 'customer_name' ]
         );
         $sms_to_representative = $this->send_sms_to_number( $representative_phone, $representative_message );

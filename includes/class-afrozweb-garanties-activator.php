@@ -51,7 +51,7 @@ class Afrozweb_Garanties_Activator {
                             installer_name VARCHAR(255) NULL,
                             installer_phone VARCHAR(20) NOT NULL,
                             installer_national_id VARCHAR(20) NULL,
-                            warranty_number VARCHAR(100) NOT NULL,
+                            warranty_number VARCHAR(100) NULL,
                             product_type VARCHAR(100) NOT NULL,
                         
                             -- ستون‌های مربوط به تاریخ و مدت گارانتی

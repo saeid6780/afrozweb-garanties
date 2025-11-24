@@ -294,7 +294,7 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
         $delete_nonce = wp_create_nonce( 'warranty_delete_nonce' );
         $delete_url = admin_url( 'admin.php?page=warranty-management-list&action=delete&warranty=' . $item->id . '&_wpnonce=' . $delete_nonce );
         $print_url = admin_url( 'admin.php?page=warranty-print&warranty_id=' . $item->id );
-        
+
         $title = '<strong>' . esc_html( $item->warranty_number ) . '</strong>';
 
         $actions = [

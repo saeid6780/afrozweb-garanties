@@ -95,8 +95,8 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
 
             <!-- جزئیات گارانتی -->
             <tr class="form-field">
-                <th scope="row"><label for="warranty_number"><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?> <span class="description">(<?php esc_html_e( 'ضروری', AFROZWEB_GARANTY_SLUG ); ?>)</span></label></th>
-                <td><input name="warranty_number" type="text" id="warranty_number" value="<?php echo esc_attr( $warranty->warranty_number ?? '' ); ?>" class="regular-text" required></td>
+                <th scope="row"><label for="warranty_number"><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?></label></th>
+                <td><input name="warranty_number" type="text" id="warranty_number" value="<?php echo esc_attr( $warranty->warranty_number ?? '' ); ?>" class="regular-text"></td>
             </tr>
             <tr class="form-field">
                 <th scope="row"><label for="product_type"><?php esc_html_e( 'نوع محصول استفاده شده', AFROZWEB_GARANTY_SLUG ); ?> <span class="description">(<?php esc_html_e( 'ضروری', AFROZWEB_GARANTY_SLUG ); ?>)</span></label></th>

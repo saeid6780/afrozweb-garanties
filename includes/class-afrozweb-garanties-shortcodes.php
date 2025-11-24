@@ -119,7 +119,7 @@ class Afrozweb_Garanties_Shortcodes {
         $errors = [];
 
         // 2. اعتبارسنجی سمت سرور
-        $required_fields = ['customer_name', 'customer_phone', 'project_address', 'installer_phone', 'warranty_number', 'product_type', 'installation_date'];
+        $required_fields = ['customer_name', 'customer_phone', 'project_address', 'installer_phone', 'product_type', 'installation_date'];
         foreach ($required_fields as $field) {
             if ( empty( $_POST[$field] ) ) {
                 $errors[$field] = __( 'این فیلد ضروری است.', AFROZWEB_GARANTY_SLUG );
@@ -156,10 +156,11 @@ class Afrozweb_Garanties_Shortcodes {
             }
         }
 
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'warranties';
+
         // اعتبارسنجی یکتا بودن شماره گارانتی
         if ( ! empty( $_POST['warranty_number'] ) ) {
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'warranties';
             $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table_name WHERE warranty_number = %s", sanitize_text_field( $_POST['warranty_number'] ) ) );
             if ( $exists ) {
                 $errors['warranty_number'] = __( 'این شماره گارانتی قبلاً ثبت شده است.', AFROZWEB_GARANTY_SLUG );
@@ -202,7 +203,7 @@ class Afrozweb_Garanties_Shortcodes {
         if ( $result ) {
             wp_send_json_success( [ 'message' => __( 'گارانتی شما با موفقیت ثبت شد و پس از بررسی توسط مدیر، تایید خواهد شد.', AFROZWEB_GARANTY_SLUG ) ] );
         } else {
-            wp_send_json_error( [ 'message' => __( 'خطایی در پایگاه داده رخ داد. لطفاً دوباره تلاش کنید.', AFROZWEB_GARANTY_SLUG ) ] );
+            wp_send_json_error( [ 'message' => __( 'خطایی در پایگاه داده رخ داد. لطفاً دوباره تلاش کنید.', AFROZWEB_GARANTY_SLUG ), 'error'=>$this->wpdb->last_error ] );
         }
 
         wp_die();

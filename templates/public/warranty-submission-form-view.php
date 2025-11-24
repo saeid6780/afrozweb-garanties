@@ -61,8 +61,8 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="warranty_number"><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?> <span class="required">*</span></label>
-                <input type="text" id="warranty_number" name="warranty_number" required>
+                <label for="warranty_number"><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?></label>
+                <input type="text" id="warranty_number" name="warranty_number">
                 <small class="error-message"></small>
             </div>
             <div class="form-group">
