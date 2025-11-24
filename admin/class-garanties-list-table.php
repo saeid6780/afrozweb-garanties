@@ -293,7 +293,8 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
         $edit_url = admin_url( 'admin.php?page=warranty-management-add-new&id=' . $item->id );
         $delete_nonce = wp_create_nonce( 'warranty_delete_nonce' );
         $delete_url = admin_url( 'admin.php?page=warranty-management-list&action=delete&warranty=' . $item->id . '&_wpnonce=' . $delete_nonce );
-
+        $print_url = admin_url( 'admin.php?page=warranty-print&warranty_id=' . $item->id );
+        
         $title = '<strong>' . esc_html( $item->warranty_number ) . '</strong>';
 
         $actions = [
@@ -302,7 +303,8 @@ class Afrozweb_Garanty_List_Table extends \WP_List_Table {
                 esc_url( $delete_url ),
                 esc_js( __( 'آیا از حذف این گارانتی اطمینان دارید؟', AFROZWEB_GARANTY_SLUG ) ),
                 __( 'حذف', AFROZWEB_GARANTY_SLUG )
-            )
+            ),
+            'print'  => sprintf( '<a href="%s" target="_blank">%s</a>', esc_url( $print_url ), __( 'چاپ', AFROZWEB_GARANTY_SLUG ) ),
         ];
 
         return $title . $this->row_actions( $actions );

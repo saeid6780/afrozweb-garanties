@@ -13,7 +13,17 @@ $page_title = $warranty ? sprintf( esc_html__( 'ویرایش گارانتی (ID:
 ?>
 
 <div class="wrap">
-    <h1><?php echo $page_title; ?></h1>
+    <h1>
+        <?php echo $page_title; ?>
+        <!-- [بخش جدید] افزودن دکمه چاپ فقط در حالت ویرایش -->
+        <?php if ( $warranty ) : ?>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=warranty-print&warranty_id=' . $warranty->id ) ); ?>"
+               class="page-title-action"
+               target="_blank">
+                <?php esc_html_e( 'چاپ گارانتی', AFROZWEB_GARANTY_SLUG ); ?>
+            </a>
+        <?php endif; ?>
+    </h1>
 
     <?php if ( ! empty( $message ) ) : ?>
         <div class="notice <?php echo esc_attr( $notice_class ); ?> is-dismissible">

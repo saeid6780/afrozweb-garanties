@@ -175,6 +175,72 @@ class Afrozweb_Garanties_Admin {
             'warranty-management-add-new',                      // اسلاگ این منو
             [ $this, 'warranty_management_add_edit_page' ]                 // تابع نمایش محتوای صفحه افزودن/ویرایش
         );
+
+        $print_page_hook = add_submenu_page(
+            null,                                       // Parent Slug (null for no menu)
+            __( 'چاپ گارانتی', AFROZWEB_GARANTY_SLUG ),    // Page Title
+            __( 'چاپ گارانتی', AFROZWEB_GARANTY_SLUG ),    // Menu Title
+            'manage_options',                           // Capability
+            'warranty-print',                           // Menu Slug (برای استفاده در URL)
+            [ $this, 'warranty_management_print_page_callback' ]  // تابع نمایش محتوا
+        );
+        add_action( "load-{$print_page_hook}", [ $this, 'warranty_management_load_print_page_screen' ] );
+    }
+
+    function warranty_management_load_print_page_screen() {
+        // 1. بررسی امنیت و دریافت ID گارانتی از URL
+        if ( ! isset( $_GET['warranty_id'] ) ) {
+            wp_die( esc_html__( 'شناسه گارانتی مشخص نشده است.', AFROZWEB_GARANTY_SLUG ) );
+        }
+        $warranty_id = absint( $_GET['warranty_id'] );
+
+        // 2. واکشی اطلاعات کامل گارانتی
+        global $wpdb;
+        $warranty = $wpdb->get_row( $wpdb->prepare(
+            "SELECT w.*, u.display_name as representative_name 
+         FROM {$wpdb->prefix}warranties w
+         LEFT JOIN {$wpdb->users} u ON w.representative_id = u.ID
+         WHERE w.id = %d",
+            $warranty_id
+        ) );
+
+        // 3. اگر گارانتی یافت نشد، خطا نمایش بده
+        if ( ! $warranty ) {
+            wp_die( esc_html__( 'گارانتی با این شناسه یافت نشد.', AFROZWEB_GARANTY_SLUG ) );
+        }
+
+        // 4. رندر کردن فایل View
+        // ما تمام HTML، از جمله تگ‌های <html> و <head> را در فایل view خود مدیریت می‌کنیم.
+        require_once AFROZWEB_GARANTY_BASE . 'templates/admin/warranty-print-page.php';
+
+        // 5. **مهم‌ترین بخش:** اجرای اسکریپت را در همینجا متوقف کن!
+        exit;
+    }
+
+    function warranty_management_print_page_callback() {
+        // 1. بررسی امنیت و دریافت ID گارانتی از URL
+        /*if ( ! isset( $_GET['warranty_id'] ) ) {
+            wp_die( esc_html__( 'شناسه گارانتی مشخص نشده است.', AFROZWEB_GARANTY_SLUG ) );
+        }
+        $warranty_id = absint( $_GET['warranty_id'] );
+
+        // 2. واکشی اطلاعات کامل گارانتی به همراه نام نماینده
+        global $wpdb;
+        $warranty = $wpdb->get_row( $wpdb->prepare(
+            "SELECT w.*, u.display_name as representative_name 
+         FROM {$wpdb->prefix}warranties w
+         LEFT JOIN {$wpdb->users} u ON w.representative_id = u.ID
+         WHERE w.id = %d",
+            $warranty_id
+        ) );
+
+        // 3. اگر گارانتی یافت نشد، خطا نمایش بده
+        if ( ! $warranty ) {
+            wp_die( esc_html__( 'گارانتی با این شناسه یافت نشد.', AFROZWEB_GARANTY_SLUG ) );
+        }
+
+        // 4. رندر کردن فایل View و پاس دادن اطلاعات به آن
+        require_once AFROZWEB_GARANTY_BASE . 'templates/admin/warranty-print-page.php';*/
     }
 
     public function warranty_management_handle_form_submission() {
