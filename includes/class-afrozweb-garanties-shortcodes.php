@@ -374,6 +374,15 @@ class Afrozweb_Garanties_Shortcodes {
             wp_send_json_error( [ 'message' => __( 'هیچ گارانتی با این شماره تماس یافت نشد.', AFROZWEB_GARANTY_SLUG ) ] );
         }
 
+        $products = [
+            'simple_4mm'   => __( 'ایزوگام ساده ۴ میلیمتر', AFROZWEB_GARANTY_SLUG ),
+            'foil_4mm'     => __( 'ایزوگام فویل دار ۴ میلیمتر', AFROZWEB_GARANTY_SLUG ),
+            'simple_3.5mm' => __( 'ایزوگام ساده ۳.۵ میلیمتر', AFROZWEB_GARANTY_SLUG ),
+            'foil_3.5mm'   => __( 'ایزوگام فویل دار ۳.۵ میلیمتر', AFROZWEB_GARANTY_SLUG ),
+            'isoepoxy'     => __( 'ایزواپوکسی', AFROZWEB_GARANTY_SLUG ),
+            'isopolymer'   => __( 'ایزوپلیمر', AFROZWEB_GARANTY_SLUG )
+        ];
+
         // 5. ساخت HTML جدول نتایج
         ob_start();
         ?>
@@ -383,9 +392,12 @@ class Afrozweb_Garanties_Shortcodes {
                 <tr>
                     <th><?php esc_html_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'متراژ', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'نوع ایزوگام', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?></th>
+                    <th><?php esc_html_e( 'کد پستی', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'زمان باقیمانده', AFROZWEB_GARANTY_SLUG ); ?></th>
                     <th><?php esc_html_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?></th>
@@ -396,9 +408,12 @@ class Afrozweb_Garanties_Shortcodes {
                     <tr>
                         <td data-label="<?php esc_attr_e( 'ردیف', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $index + 1; ?></td>
                         <td data-label="<?php esc_attr_e( 'شماره گارانتی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->warranty_number ) ? '-' : esc_html( $warranty->warranty_number ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'متراژ', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installed_area ) ? '-' : $this->convert_persian_numbers_to_english( intval(esc_html( $warranty->installed_area ) ), true ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'نوع ایزوگام', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->product_type ) ? '-' : esc_html( $warranty->product_type ) ?></td>
                         <td data-label="<?php esc_attr_e( 'نماینده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->representative_name ) ? '-' : esc_html( $warranty->representative_name ); ?></td>
                         <td data-label="<?php esc_attr_e( 'نصاب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installer_name ) ? '-' : esc_html( $warranty->installer_name ); ?></td>
                         <td data-label="<?php esc_attr_e( 'آدرس', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->project_address ) ? '-' : esc_html( $warranty->project_address ); ?></td>
+                        <td data-label="<?php esc_attr_e( 'کد پستی', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->project_postal_code ) ? '-' : $this->convert_persian_numbers_to_english( esc_html( $warranty->project_postal_code ), true ); ?></td>
                         <td data-label="<?php esc_attr_e( 'تاریخ نصب', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo empty( $warranty->installation_date ) ? '-' : esc_html( date_i18n( 'Y/m/d', strtotime( $warranty->installation_date ) ) ); ?></td>
                         <td data-label="<?php esc_attr_e( 'زمان باقیمانده', AFROZWEB_GARANTY_SLUG ); ?>"><?php echo $this->calculate_time_until_expiration( $warranty->expiration_date ); ?></td>
                         <td data-label="<?php esc_attr_e( 'وضعیت', AFROZWEB_GARANTY_SLUG ); ?>">
@@ -449,11 +464,11 @@ class Afrozweb_Garanties_Shortcodes {
     /**
      * تابع کمکی برای تبدیل اعداد فارسی و عربی به انگلیسی.
      */
-    public function convert_persian_numbers_to_english($string) {
+    public function convert_persian_numbers_to_english($string, $to_persian = false) {
         $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
         $english = range(0, 9);
-        return str_replace($persian, $english, str_replace($arabic, $english, $string));
+        return $to_persian ? str_replace($english, $persian, $string) :str_replace($persian, $english, str_replace($arabic, $english, $string));
     }
 
     /**
